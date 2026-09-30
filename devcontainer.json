@@ -1,0 +1,20 @@
+{
+  "name": "CascadeLens",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+  "postCreateCommand": "pip install -e '.[dev]'",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "charliermarsh.ruff"],
+      "settings": {
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestArgs": ["tests"]
+      }
+    }
+  },
+  "secrets": {
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key used by the CascadeLens agents"
+    }
+  }
+}

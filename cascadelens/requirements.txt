@@ -1,5 +1,0 @@
-# Third-party dependencies (sqlite3, json, logging, argparse are in the standard library)
-openai>=1.40
-pydantic>=2.0
-python-dotenv>=1.0
-

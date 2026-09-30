@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cascadelens"
+version = "0.1.0"
+description = "Cross-layer failure triage for ingestion, curation and semantic logs"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.40",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+cascadelens = "cascadelens.main:main"
+
+[tool.setuptools.packages.find]
+include = ["cascadelens*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

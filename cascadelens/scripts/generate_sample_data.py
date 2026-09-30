@@ -79,22 +79,19 @@ CREATE TABLE FwkCurLog (
     target_delta_table    TEXT
 );
 
+DROP VIEW IF EXISTS all_logs;
 CREATE VIEW all_logs AS
-SELECT 'ingestion'          AS layer,
-       run_id, pipeline_name,
-       target_delta_table   AS unit_name,
+SELECT 'ingestion' AS layer, log_id, run_id, pipeline_name,
+       activity_name AS unit_name, notebook_name, trigger_name,
        status, error_message, start_time, end_time, rows_written, attempt,
-       source_type, source_name,
-       NULL                 AS reference_source_name,
+       source_type, source_name, NULL AS reference_source_name,
        target_type, target_delta_table
 FROM DiLog
 UNION ALL
-SELECT CASE WHEN script_name LIKE '%\_dal%' ESCAPE '\' THEN 'semantic'
-            ELSE 'curation' END AS layer,
-       run_id, pipeline_name,
-       script_name          AS unit_name,
-       status, error_message, start_time, end_time, rows_written,
-       1                    AS attempt,
+SELECT CASE WHEN script_name LIKE '%\_dal%' ESCAPE '\' THEN 'semantic' ELSE 'curation' END,
+       log_id, run_id, pipeline_name,
+       script_name, NULL, NULL,
+       status, error_message, start_time, end_time, rows_written, 1,
        source_type, source_name, reference_source_name,
        target_type, target_delta_table
 FROM FwkCurLog;
