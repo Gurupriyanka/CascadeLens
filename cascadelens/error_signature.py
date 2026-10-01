@@ -1,4 +1,9 @@
+from datetime import date, timedelta
 import re
+import re
+from collections import defaultdict
+
+from cascadelens.models import LogRecord
 
 GUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
@@ -42,21 +47,21 @@ def make_signature(message: str | None) -> str:
     return text
     # The raw error_message on the record is never touched; this value is only for grouping.
 
+def group_by_signature(records: list[LogRecord]) -> dict[str, list[LogRecord]]:
+    groups = defaultdict(list)
+    for record in records:
+        if record.is_failed:
+            groups[make_signature(record.error_message)].append(record)
+    return dict(groups)
 
-DB_PATH = "cascadelens/scripts/data/noisy_recurring.db"
-
-
-def check_on_database() -> None:
-    from collections import Counter
-
-    from cascadelens.reader import read_logs
-
-    failed = [r for r in read_logs(DB_PATH) if r.is_failed]
-    raw_messages = {r.error_message for r in failed}
-    counts = Counter(make_signature(r.error_message) for r in failed)
-
-    print(f"failed rows: {len(failed)}")
-    print(f"distinct raw messages: {len(raw_messages)}")
-    print(f"distinct signatures: {len(counts)}")
-    for signature, n in counts.most_common():
-        print(f"{n:3d}  {signature}")
+def recurrence_days(
+    records: list[LogRecord], today: date, window_days: int = 7
+) -> dict[str, int]:
+    first_day = today - timedelta(days=window_days - 1)
+    days_by_signature = defaultdict(set)
+    for signature, group in group_by_signature(records).items():
+        for record in group:
+            day = record.start_time.date()
+            if first_day <= day <= today:
+                days_by_signature[signature].add(day)
+    return {signature: len(days) for signature, days in days_by_signature.items()}

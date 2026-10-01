@@ -1,8 +1,8 @@
 # CascadeLens expected answers
 
-Run date 2026-09-30 (today is the latest date in each .db).
+Run date 2026-10-01 (today is the latest date in each .db).
 
-Pipeline status rule, applied to today's units (latest attempt per unit): Failed = at least half of the units ended failed. Partial = some units failed, but fewer than half. Degraded = no unit failed, but a unit needed retries, or succeeded with 0 rows when history is normally non-zero. Healthy = everything succeeded first time with normal row counts.
+Pipeline status rule, applied to today's units (latest attempt per unit): Failed = at least half of the units ended failed. Partially Failed = some units failed, but fewer than half. Succeeded with Issues = no unit failed, but a unit needed retries, or succeeded with 0 rows when history is normally non-zero. Healthy = everything succeeded first time with normal row counts.
 
 ## all_healthy.db
 
@@ -29,7 +29,7 @@ One CRM ingestion failure. No downstream script errors, the damage shows as 0 ne
   - PL_01_Ingest_Crm: Failed
   - PL_02_Ingest_Sales: Healthy
   - PL_03_Ingest_Inventory: Healthy
-  - PL_04_Cur_Execute_Scripts: Degraded (no failures, 2 of 6 scripts wrote 0 rows)
+  - PL_04_Cur_Execute_Scripts: Succeeded with Issues (no failures, 2 of 6 scripts wrote 0 rows)
 - Route: cross_layer_rca: ingestion -> curation -> semantic, detect impact by lineage and row-count anomaly, propose the fix at the ingestion root only
 
 ## noisy_recurring.db
@@ -42,9 +42,9 @@ Recovered ingestion retries (noise) plus one script that fails on its own every 
 - Noise: sales_ingestion failed twice (HTTP 429, timeout) and succeeded on attempt 3. One earlier 429 retry 2 days ago.
 - Pipeline statuses:
   - PL_01_Ingest_Crm: Healthy
-  - PL_02_Ingest_Sales: Degraded (needed 3 attempts)
+  - PL_02_Ingest_Sales: Succeeded with Issues (needed 3 attempts)
   - PL_03_Ingest_Inventory: Healthy
-  - PL_04_Cur_Execute_Scripts: Partial (1 of 6 scripts failed)
+  - PL_04_Cur_Execute_Scripts: Partially Failed (1 of 6 scripts failed)
 - Route: history_check -> single_layer_triage (semantic only), retries flagged as noise, no cross-layer trace
 
 ## ambiguous.db
@@ -57,7 +57,7 @@ Sales has two plausible causes and too little evidence. Inventory has a separate
 - CRM chain is unaffected.
 - Pipeline statuses:
   - PL_01_Ingest_Crm: Healthy
-  - PL_02_Ingest_Sales: Degraded (succeeded with 0 rows, normally about 9,800)
+  - PL_02_Ingest_Sales: Succeeded with Issues (succeeded with 0 rows, normally about 9,800)
   - PL_03_Ingest_Inventory: Healthy
-  - PL_04_Cur_Execute_Scripts: Partial (2 of 6 scripts failed, sales_dal wrote 0 rows)
+  - PL_04_Cur_Execute_Scripts: Partially Failed (2 of 6 scripts failed, sales_dal wrote 0 rows)
 - Route: Incident A: cross_layer_rca -> low confidence -> escalate_to_human with both hypotheses. Incident B: single_layer_triage

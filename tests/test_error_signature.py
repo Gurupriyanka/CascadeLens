@@ -1,5 +1,8 @@
-from cascadelens.error_signature import make_signature
+from datetime import date, datetime
 
+from cascadelens.error_signature import make_signature, recurrence_days
+from cascadelens.error_signature import group_by_signature, make_signature
+from cascadelens.models import LogRecord
 
 def test_empty_message_gives_empty_signature():
     assert make_signature(None) == ""
@@ -113,3 +116,52 @@ def test_repeated_spaces_are_collapsed():
 
     assert a == "request timed out after <num>s"
     assert a == b
+
+
+def failed(log_id, message):
+    return LogRecord(
+        layer="ingestion",
+        log_id=log_id,
+        unit_name="Ingest_sales_ingestion",
+        status="Failed",
+        error_message=message,
+    )
+
+def test_same_root_cause_with_different_values_is_one_group():
+    a = failed(1, "HttpStatus 429: Too Many Requests from sales_api. Activity ID: 3f2a9c1e-7b4d-4e2a-9c1f-0a1b2c3d4e5f")
+    b = failed(2, "HttpStatus 429: Too Many Requests from sales_api. Activity ID: 9d8c7b6a-1111-2222-3333-444455556666")
+    c = failed(3, "TimeoutException: request to sales_api/orders timed out after 120s.")
+
+    groups = group_by_signature([a, b, c])
+
+    assert len(groups) == 2
+    assert [r.log_id for r in groups[make_signature(a.error_message)]] == [1, 2]
+
+
+def test_records_that_did_not_fail_are_ignored():
+    ok = LogRecord(layer="ingestion", log_id=1, status="Succeeded")
+
+    assert group_by_signature([ok]) == {}
+
+def failed_on(log_id, day, message):
+    return LogRecord(
+        layer="ingestion",
+        log_id=log_id,
+        unit_name="Ingest_sales_ingestion",
+        status="Failed",
+        error_message=message,
+        start_time=datetime(day.year, day.month, day.day, 2, 0),
+    )
+
+
+def test_recurrence_counts_distinct_days_inside_the_window():
+    msg = "HttpStatus 429: Too Many Requests from sales_api."
+    today = date(2026, 9, 30)
+    records = [
+        failed_on(1, date(2026, 9, 30), msg),
+        failed_on(2, date(2026, 9, 30), msg),  # same day twice: counts once
+        failed_on(3, date(2026, 9, 28), msg),
+        failed_on(4, date(2026, 9, 20), msg),  # outside the 7 day window
+    ]
+
+    assert recurrence_days(records, today) == {make_signature(msg): 2}

@@ -255,8 +255,8 @@ SCENARIOS = {
 STATUS_RULE = (
     "Pipeline status rule, applied to today's units (latest attempt per unit): "
     "Failed = at least half of the units ended failed. "
-    "Partial = some units failed, but fewer than half. "
-    "Degraded = no unit failed, but a unit needed retries, or succeeded with 0 rows when history is normally non-zero. "
+    "Partially Failed = some units failed, but fewer than half. "
+    "Succeeded with Issues = no unit failed, but a unit needed retries, or succeeded with 0 rows when history is normally non-zero. "
     "Healthy = everything succeeded first time with normal row counts."
 )
 
@@ -280,7 +280,7 @@ EXPECTED = {
         ],
         statuses={"PL_01_Ingest_Crm": "Failed", "PL_02_Ingest_Sales": "Healthy",
                   "PL_03_Ingest_Inventory": "Healthy",
-                  CUR_PIPELINE: "Degraded (no failures, 2 of 6 scripts wrote 0 rows)"},
+                  CUR_PIPELINE: "Succeeded with Issues (no failures, 2 of 6 scripts wrote 0 rows)"},
         route="cross_layer_rca: ingestion -> curation -> semantic, detect impact by lineage and row-count anomaly, propose the fix at the ingestion root only",
     ),
     "noisy_recurring": dict(
@@ -291,9 +291,9 @@ EXPECTED = {
             "Victims: none (nothing reads customer_dal).",
             "Noise: sales_ingestion failed twice (HTTP 429, timeout) and succeeded on attempt 3. One earlier 429 retry 2 days ago.",
         ],
-        statuses={"PL_01_Ingest_Crm": "Healthy", "PL_02_Ingest_Sales": "Degraded (needed 3 attempts)",
+        statuses={"PL_01_Ingest_Crm": "Healthy", "PL_02_Ingest_Sales": "Succeeded with Issues (needed 3 attempts)",
                   "PL_03_Ingest_Inventory": "Healthy",
-                  CUR_PIPELINE: "Partial (1 of 6 scripts failed)"},
+                  CUR_PIPELINE: "Partially Failed (1 of 6 scripts failed)"},
         route="history_check -> single_layer_triage (semantic only), retries flagged as noise, no cross-layer trace",
     ),
     "ambiguous": dict(
@@ -304,9 +304,9 @@ EXPECTED = {
             "Incident B (Inventory): root cause inventory_dal transformation error (reorder_level not in its source inventory_curation, which succeeded). Confidence: high. Victims: none.",
             "CRM chain is unaffected.",
         ],
-        statuses={"PL_01_Ingest_Crm": "Healthy", "PL_02_Ingest_Sales": "Degraded (succeeded with 0 rows, normally about 9,800)",
+        statuses={"PL_01_Ingest_Crm": "Healthy", "PL_02_Ingest_Sales": "Succeeded with Issues (succeeded with 0 rows, normally about 9,800)",
                   "PL_03_Ingest_Inventory": "Healthy",
-                  CUR_PIPELINE: "Partial (2 of 6 scripts failed, sales_dal wrote 0 rows)"},
+                  CUR_PIPELINE: "Partially Failed (2 of 6 scripts failed, sales_dal wrote 0 rows)"},
         route="Incident A: cross_layer_rca -> low confidence -> escalate_to_human with both hypotheses. Incident B: single_layer_triage",
     ),
 }
@@ -379,9 +379,9 @@ def status_board(conn, today: date):
         if failed * 2 >= n:
             st = "Failed"
         elif failed:
-            st = "Partial"
+            st = "Partially Failed"
         elif retried or zero:
-            st = "Degraded"
+            st = "Succeeded with Issues"
         else:
             st = "Healthy"
         board[pipe] = f"{st} ({failed} of {n} failed, {zero} with 0 rows{', retried' if retried else ''})"
