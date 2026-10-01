@@ -1,7 +1,7 @@
 from datetime import datetime
+from dbm import sqlite3
 from enum import Enum
-from typing import Optional
-from pydantic import BaseModel
+from datetime import datetime
 
 class Layer(str, Enum):
     INGESTION = "ingestion"
@@ -13,19 +13,37 @@ class RunStatus(str, Enum):
     FAILED = "Failed"
     OTHER = "other"     # running, cancelled, skipped
 
-class LogRecord(BaseModel):
-    layer: Layer
-    run_id: str
-    pipeline_name: str
-    unit_name: str                       # activity or script name
-    status: RunStatus
-    error_message: Optional[str] = None
-    start_time: datetime
-    end_time: Optional[datetime] = None  # NULL on some failures
-    rows_written: Optional[int] = None
-    attempt: int = 1
-    source_type: Optional[str] = None
-    source_name: Optional[str] = None
-    reference_source_name: Optional[str] = None
-    target_type: Optional[str] = None
-    target_delta_table: Optional[str] = None
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class LogRecord:
+    layer: str
+    log_id: int
+    run_id: str | None = None
+    pipeline_name: str | None = None
+    unit_name: str | None = None
+    notebook_name: str | None = None
+    trigger_name: str | None = None
+    status: str | None = None
+    error_message: str | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    rows_written: int | None = None
+    attempt: int | None = None
+    source_type: str | None = None
+    source_name: str | None = None
+    reference_source_name: str | None = None
+    target_type: str | None = None
+    target_delta_table: str | None = None
+
+    @classmethod
+    def from_row(cls, row: sqlite3.Row) -> "LogRecord":
+        data = dict(row)
+        data["start_time"] = datetime.fromisoformat(data["start_time"]) if data["start_time"] else None
+        data["end_time"] = datetime.fromisoformat(data["end_time"]) if data["end_time"] else None
+        return cls(**data)
+
+    @property
+    def is_failed(self) -> bool:
+        return self.status == "Failed"

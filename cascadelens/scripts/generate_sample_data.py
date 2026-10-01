@@ -34,6 +34,7 @@ import random
 import sqlite3
 from datetime import date, datetime, timedelta
 from pathlib import Path
+import uuid
 
 HISTORY_DAYS = 5  # healthy days before "today"
 CUR_PIPELINE = "PL_04_Cur_Execute_Scripts"
@@ -122,6 +123,13 @@ def ts(d: date, hour: int, minute: int) -> datetime:
 def fmt(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
+def vary(msg, row, salt=0):
+    """Fill {guid}, {run} and {start} in a message so the same problem reads
+    differently on every day, like real ADF and Databricks errors."""
+    unit = row.get("activity_name") or row.get("script_name")
+    guid = uuid.uuid5(uuid.NAMESPACE_DNS, f"{row['run_id']}|{unit}|{salt}")
+    run = 880000 + guid.int % 90000
+    return msg.format(guid=guid, run=run, start=row["start_time"])
 
 def baseline_day(day: date, rng: random.Random):
     """One healthy day. Returns (ingestion: table -> list of attempt rows, curation: script -> row)."""
@@ -169,7 +177,7 @@ def add_retries(attempts, errors):
         r = dict(ok)
         r["start_time"] = fmt(datetime.fromisoformat(ok["start_time"]) + timedelta(minutes=15 * (n - 1)))
         r["end_time"] = fmt(datetime.fromisoformat(r["start_time"]) + timedelta(minutes=2))
-        fail_ing(r, err, attempt=n)
+        fail_ing(r, vary(err, r, salt=n), attempt=n)
         failed.append(r)
     shift = timedelta(minutes=15 * len(errors))
     ok["start_time"] = fmt(datetime.fromisoformat(ok["start_time"]) + shift)
@@ -189,8 +197,11 @@ def scenario_clean_cascade(offset, ing, cur):
     """CRM ingestion fails. Downstream scripts succeed with 0 new rows (no error anywhere downstream)."""
     if offset != 0:
         return
-    fail_ing(ing["customer_ingestion"][0],
-             "ErrorCode=SqlFailedToConnect: Login failed for user 'svc_adf_crm'. Password expired.")
+    row = ing["customer_ingestion"][0]
+    fail_ing(row, vary(
+        "Operation on target Ingest_customer_ingestion failed: "
+        "ErrorCode=SqlFailedToConnect: Login failed for user 'svc_adf_crm'. "
+        "Password expired. Activity ID: {guid}", row))
     cur["customer_curation"]["rows_written"] = 0   # succeeded, but nothing new flowed in
     cur["customer_dal"]["rows_written"] = 0
     # sales_curation reads customer_curation as a reference, but its own row count stays normal
@@ -201,15 +212,23 @@ def scenario_noisy_recurring(offset, ing, cur):
     """Recovered ingestion retries (noise) plus one script with the same error every day."""
     if offset == 0:
         add_retries(ing["sales_ingestion"], [
-            "HttpStatus 429: Too Many Requests from sales_api.",
-            "TimeoutException: request to sales_api/orders timed out after 120s."])
+            "Operation on target Ingest_sales_ingestion failed: "
+            "HttpStatus 429: Too Many Requests from sales_api. Activity ID: {guid}",
+            "Operation on target Ingest_sales_ingestion failed: "
+            "TimeoutException: request to sales_api/orders timed out after 120s. "
+            "Started at {start}"])
     if offset == 2:
-        add_retries(ing["sales_ingestion"], ["HttpStatus 429: Too Many Requests from sales_api."])
+        add_retries(ing["sales_ingestion"], [
+            "Operation on target Ingest_sales_ingestion failed: "
+            "HttpStatus 429: Too Many Requests from sales_api. Activity ID: {guid}"])
     # customer_curation succeeds every day, so the defect is in customer_dal itself
-    fail_cur(cur["customer_dal"],
-             "AnalysisException: cannot resolve 'segment_code' given input columns "
-             "[customer_id, name, city].")
-
+    row = cur["customer_dal"]
+    fail_cur(row, vary(
+        "AnalysisException: cannot resolve 'segment_code' given input columns "
+        "[customer_id, name, city].\n"
+        "\tat org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt"
+        ".failAnalysis(package.scala:54)\n"
+        "\tJob run id: {run}, Activity ID: {guid}", row))
 
 def scenario_ambiguous(offset, ing, cur):
     """Sales: empty load plus a curation failure (two plausible causes). Inventory: independent failure."""
