@@ -37,6 +37,7 @@ def triage(db_path: str) -> TriageReport:
         "First check the pipeline statuses. "
         "Then ask triage_agent for today's failures. "
         "Each failed table is one failure. "
+        "Call lineage_agent for one failed table at a time, and wait for its answer before calling it for the next failed table. "
         "For each failed table, ask lineage_agent separately for the confirmed and at risk tables, "
         "giving it the database path and that one failed table. "
         "If a failed table appears in the impacted tables of another failed table, "

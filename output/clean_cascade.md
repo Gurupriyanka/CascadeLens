@@ -5,7 +5,7 @@
 
 ## Failure 1: customer_ingestion
 
-- **Root cause:** The failure is due to a password expiration issue for the user 'svc_adf_crm'.
+- **Root cause:** There was a failure in the ingestion of customer data due to an expired password for the user 'svc_adf_crm'.
 - **Recurrence:** 1 of the last 7 days
 
 **Confirmed impacted**

@@ -40,6 +40,7 @@ def build_orchestrator() -> ToolCallingAgent:
         tools=[get_pipeline_statuses],
         model=OpenAIModel(model_id="gpt-4o-mini"),
         managed_agents=[build_triage_agent(), build_lineage_agent()],
+        max_tool_threads=1,
         name="orchestrator",
         description="Coordinates the failure investigation.",
     )

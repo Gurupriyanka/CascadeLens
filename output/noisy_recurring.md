@@ -5,5 +5,5 @@
 
 ## Failure 1: customer_dal
 
-- **Root cause:** AnalysisException: cannot resolve 'segment_code' given input columns [customer_id, name, city].
+- **Root cause:** Spark SQL job cannot find the 'segment_code' column in the provided input columns.
 - **Recurrence:** 6 of the last 7 days
