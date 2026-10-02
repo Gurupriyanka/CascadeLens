@@ -3,8 +3,8 @@ from smolagents import OpenAIModel, ToolCallingAgent
 from cascadelens.tools import (
     get_failure_groups,
     get_impacted_tables,
-    split_impacted_tables,
     get_pipeline_statuses,
+    split_impacted_tables,
 )
 
 
@@ -20,6 +20,7 @@ def build_triage_agent() -> ToolCallingAgent:
         ),
     )
 
+
 def build_lineage_agent() -> ToolCallingAgent:
     """Specialist: finds what a failed table affects, then splits it into confirmed and at risk."""
     return ToolCallingAgent(
@@ -31,6 +32,7 @@ def build_lineage_agent() -> ToolCallingAgent:
             "failed table name. Returns the confirmed impacted tables and the at risk tables."
         ),
     )
+
 
 def build_orchestrator() -> ToolCallingAgent:
     """Boss agent: reads the pipeline statuses, then delegates to the specialists."""
