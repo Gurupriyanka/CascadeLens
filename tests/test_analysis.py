@@ -1,6 +1,6 @@
 from datetime import date
 
-from cascadelens.analysis import analyse
+from cascadelens.analysis import analyse, build_failures, build_warnings
 from cascadelens.lineage import find_impacted
 from cascadelens.lineage import find_impacted, split_impacted
 from cascadelens.reader import read_logs
@@ -59,3 +59,34 @@ def test_clean_cascade_splits_confirmed_from_at_risk():
 
     assert confirmed == {"customer_curation", "customer_dal"}
     assert at_risk == {"sales_curation", "sales_dal"}
+
+def test_build_failures_for_each_database():
+    def run(name):
+        path = f"cascadelens/scripts/data/{name}.db"
+        return build_failures(analyse(path), read_logs(path))
+
+    assert run("all_healthy") == []
+
+    (cascade,) = run("clean_cascade")
+    assert cascade.failed_table == "customer_ingestion"
+    assert cascade.confirmed_impacted == ["customer_curation", "customer_dal"]
+    assert cascade.at_risk == ["sales_curation", "sales_dal"]
+
+    (noisy,) = run("noisy_recurring")
+    assert noisy.failed_table == "customer_dal"
+    assert noisy.recurrence_days == 6
+
+    inventory, sales = run("ambiguous")
+    assert inventory.failed_table == "inventory_dal"
+    assert sales.failed_table == "sales_curation"
+    assert sales.confirmed_impacted == ["sales_dal"]
+
+
+def test_build_warnings_links_the_empty_load_to_its_downstream_tables():
+    path = "cascadelens/scripts/data/ambiguous.db"
+    analysis, records = analyse(path), read_logs(path)
+    failures = build_failures(analysis, records)
+
+    (warning,) = build_warnings(analysis, records, failures)
+    assert warning.empty_table == "sales_ingestion"
+    assert warning.at_risk == ["sales_curation", "sales_dal"]

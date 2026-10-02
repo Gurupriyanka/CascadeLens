@@ -74,3 +74,13 @@ def is_normally_non_zero(records: list[LogRecord], unit_key: tuple[str, str], da
     if not history:
         return False
     return sum((r.rows_written or 0) > 0 for r in history) * 2 > len(history)
+
+# Find units that succeeded today with 0 rows although they normally write rows.
+# Retried units are not included, because a retry has no downstream victims.
+# Returns: a dict mapping the target table to the pipeline that ran it.
+def empty_loads(records: list[LogRecord], day: date) -> dict[str, str]:
+    found = {}
+    for key, record in latest_attempts(records, day).items():
+        if not record.is_failed and record.rows_written == 0 and is_normally_non_zero(records, key, day):
+            found[record.target_delta_table] = record.pipeline_name
+    return found

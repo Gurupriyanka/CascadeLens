@@ -1,0 +1,10 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "cascadelens/scripts/data/ambiguous.db",
+            "name": "ambiguous.db"
+        }
+    ]
+}

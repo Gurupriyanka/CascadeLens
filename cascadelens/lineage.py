@@ -57,3 +57,24 @@ def split_impacted(
                 confirmed.add(record.target_delta_table)
     return confirmed, impacted - confirmed
 
+
+
+# Group failed tables that are connected by lineage.
+# Two failed tables are related when one sits downstream of the other.
+# Args:
+# - downstream: the graph of direct children, as built by build_downstream
+# - failed_tables: the set of tables that failed today
+# Returns: a list of sets, one set per independent failure. Order follows the sorted table names.
+def group_related(
+    downstream: dict[str, set[str]], failed_tables: set[str]
+) -> list[set[str]]:
+    groups: list[set[str]] = []
+    for table in sorted(failed_tables):
+        below = find_impacted(downstream, table)
+        merged = {table}
+        for group in list(groups):
+            if any(other in below or table in find_impacted(downstream, other) for other in group):
+                merged |= group
+                groups.remove(group)
+        groups.append(merged)
+    return groups

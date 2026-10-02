@@ -1,4 +1,4 @@
-from cascadelens.lineage import build_downstream, find_impacted
+from cascadelens.lineage import build_downstream, find_impacted, group_related
 from cascadelens.models import LogRecord
 
 
@@ -43,3 +43,23 @@ def test_impact_follows_the_chain_and_the_reference_link_but_not_other_chains():
         "sales_dal",
     }
     assert find_impacted(downstream, "sales_dal") == set()
+
+def test_group_related_merges_a_chain_and_keeps_independent_failures_apart():
+    downstream = {
+        "customer_ingestion": {"customer_curation"},
+        "customer_curation": {"customer_dal", "sales_curation"},
+        "sales_curation": {"sales_dal"},
+        "inventory_curation": {"inventory_dal"},
+    }
+
+    # one failure and its victim are one group
+    assert group_related(downstream, {"customer_ingestion", "customer_dal"}) == [
+        {"customer_dal", "customer_ingestion"}
+    ]
+    # two failures with no path between them stay apart
+    assert group_related(downstream, {"sales_curation", "inventory_dal"}) == [
+        {"inventory_dal"},
+        {"sales_curation"},
+    ]
+    # nothing failed, nothing to group
+    assert group_related(downstream, set()) == []
