@@ -2,7 +2,7 @@ from datetime import date
 
 from cascadelens.models import LogRecord
 
-# we put records into a dict in time order, so a later record overwrites an earlier one with the same key.
+# we put records into a dict (pipeline_name, unit_name) in time order, so a later record overwrites an earlier one with the same key.
 def latest_attempts(
     records: list[LogRecord], day: date
 ) -> dict[tuple[str, str], LogRecord]:
@@ -20,6 +20,9 @@ SUCCEEDED_WITH_ISSUES = "Succeeded with Issues"
 HEALTHY = "Healthy"
 
 
+# The decision ladder, first match wins. failed * 2 >= total means "at least half" without division. Raises ValueError for a pipeline with 0 units (that case is the future "Not run" detection).
+# status_from_counts(6, 1, 0, 0)   # "Partially Failed"
+# status_from_counts(6, 3, 0, 0)   # "Failed" (exactly half counts as Failed)
 def status_from_counts(
     total_units: int, failed_units: int, retried_units: int, zero_row_units: int
 ) -> str:
@@ -33,7 +36,7 @@ def status_from_counts(
         return SUCCEEDED_WITH_ISSUES
     return HEALTHY
 
-
+# Computes the four counts for each pipeline from the latest attempts, then applies the ladder. A unit counts as retried when it succeeded with attempt > 1. A missing attempt is treated as 1.
 def pipeline_statuses(records: list[LogRecord], day: date) -> dict[str, str]:
     units_by_pipeline = {}
     for (pipeline, _unit), record in latest_attempts(records, day).items():
@@ -56,6 +59,11 @@ def pipeline_statuses(records: list[LogRecord], day: date) -> dict[str, str]:
         statuses[pipeline] = status_from_counts(len(units), failed, retried, zero_rows)
     return statuses
 
+#Args:
+# - records: the raw LogRecord rows, not filtered by day or status.
+# - unit_key: a tuple of (pipeline_name, unit_name) to identify the unit
+# - day: the day to consider as "today" for the window.
+# Returns: True if the unit has a history of writing non-zero rows, False otherwise.
 def is_normally_non_zero(records: list[LogRecord], unit_key: tuple[str, str], day: date) -> bool:
     history = [
         r for r in records

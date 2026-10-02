@@ -54,6 +54,13 @@ def group_by_signature(records: list[LogRecord]) -> dict[str, list[LogRecord]]:
             groups[make_signature(record.error_message)].append(record)
     return dict(groups)
 
+# Counts the distinct days each signature failed inside the window (today plus the 6 days before). Several failures on one day count once. Run it on raw records, so a recovering error such as the 429 still shows as recurring.
+# Returns a dict mapping signature to the number of days it failed in the window. A signature that never failed in the window is not in the dict.
+# Args:
+# - records: the raw LogRecord rows, not filtered by day or status.
+# - today: the day to consider as "today" for the window.
+# - window_days: the number of days in the window, including today. Default is 7, which is the last 7 days including today. A value of 1 means only today, and 0 is not allowed. A value of 2 means today and yesterday, etc
+# Returns: a dict mapping signature to the number of days it failed in the window. A signature that never failed in the window is not in the dict.
 def recurrence_days(
     records: list[LogRecord], today: date, window_days: int = 7
 ) -> dict[str, int]:

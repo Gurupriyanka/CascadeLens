@@ -20,6 +20,10 @@ def build_downstream(records: list[LogRecord]) -> dict[str, set[str]]:
 
 # impact tracing (everything downstream of a failed table)
 # Why: build_downstream only gives direct children. If customer_ingestion fails, we also need the grandchildren, so customer_curation, then customer_dal and sales_curation, then sales_dal. The tracing walks the graph until nothing new turns up.
+# Args:
+# - downstream: the graph of direct children, as built by build_downstream
+# - failed_table: the table that failed, which is the root of the tracing
+# RETURN: the set of all downstream tables, including direct children and grandchildren, etc. The failed_table itself is not included in the return value.
 def find_impacted(downstream: dict[str, set[str]], failed_table: str) -> set[str]:
     impacted = set()
     todo = [failed_table]
@@ -36,6 +40,11 @@ def find_impacted(downstream: dict[str, set[str]], failed_table: str) -> set[str
 # Confirmed impacted: downstream units that succeeded today with 0 rows, while their history is normally non-zero. (customer_curation and customer_dal in clean_cascade.)
 # At risk: downstream units that did not show 0 rows, but sit below the failure. (sales_curation and sales_dal.)
 # impacted - confirmed is set subtraction: everything impacted that was not confirmed. A unit that never ran today is not in latest_attempts, so it lands in "at risk". That is a deliberate simplification, and it ties to your future "Not run" idea.
+#Args:
+# - records: the raw LogRecord rows, not filtered by day or status.
+# - impacted: the set of all downstream tables, as built by find_impacted
+# - day: the day to consider as "today" for the window.
+# Returns: a tuple of two sets, (confirmed, at_risk). confirmed is the set of downstream units that succeeded today with 0 rows, while their history is normally non-zero. at_risk is the set of downstream units that did not show 0 rows, but sit below the failure.
 def split_impacted(
     records: list[LogRecord], impacted: set[str], day: date
 ) -> tuple[set[str], set[str]]:

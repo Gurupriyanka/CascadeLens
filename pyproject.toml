@@ -11,6 +11,7 @@ dependencies = [
     "openai>=1.40",
     "pydantic>=2.0",
     "python-dotenv>=1.0",
+    "smolagents[openai]>=1.26",
 ]
 
 [project.optional-dependencies]

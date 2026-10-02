@@ -78,3 +78,14 @@ Core solution: TODO lines. Sample data generator: TODO lines.
 ## AI usage
 
 See [AI_USAGE.md](AI_USAGE.md).
+
+## Architecture
+orchestrator_agent
+   tools: get_pipeline_statuses
+   managed agents: triage_agent, lineage_agent
+
+   triage_agent
+      tools: get_failure_groups
+
+   lineage_agent
+      tools: get_impacted_tables, split_impacted_tables
