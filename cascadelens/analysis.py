@@ -10,13 +10,11 @@ from cascadelens.pipeline_status import empty_loads, pipeline_statuses
 from cascadelens.report import Failure, EmptyLoad
 
 
-#Analysis is a container with five named fields, so the agent later reads result.statuses instead of guessing the position in a tuple.
-#analyse runs the pieces in the agreed order: read, statuses, then the noise filter and grouping on today's rows, recurrence on all raw records, and the lineage graph.
-
+# Analysis is a container with four named fields, so the tools read result.recurrence instead of guessing the position in a tuple.
+# analyse runs the pieces in order: read, then the noise filter and grouping on today's rows, recurrence on all raw records, and the lineage graph. Statuses are computed separately by get_statuses.
 @dataclass(frozen=True)
 class Analysis:
     today: date
-    statuses: dict[str, str]
     failure_groups: dict[str, list[LogRecord]]
     recurrence: dict[str, int]
     downstream: dict[str, set[str]]
@@ -28,11 +26,16 @@ def analyse(db_path: str) -> Analysis:
     todays = [r for r in records if r.start_time.date() == today]
     return Analysis(
         today=today,
-        statuses=pipeline_statuses(records, today),
         failure_groups=group_by_signature(remove_recovered_failures(todays)),
         recurrence=recurrence_days(records, today),
         downstream=build_downstream(records),
     )
+
+# Statuses only: the first check in main.py needs nothing more, so it skips the rest of analyse().
+def get_statuses(db_path: str) -> dict[str, str]:
+    records = read_logs(db_path)
+    today = max(r.start_time for r in records).date()
+    return pipeline_statuses(records, today)
 
 
 # Build one Failure per independent failure group, using only plain Python.

@@ -321,3 +321,9 @@
 2026-10-02 21:38:59,469 INFO Report valid with 2 failure(s)
 2026-10-02 21:38:59,469 INFO Check against code: all facts match
 2026-10-02 21:38:59,470 INFO Total tokens used: input 9891, output 348
+2026-10-02 23:11:56,557 INFO Starting triage for cascadelens/scripts/data/all_healthy.db
+2026-10-02 23:11:56,568 INFO Tool called: get_pipeline_statuses
+2026-10-02 23:11:56,571 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Healthy'}
+2026-10-02 23:11:56,575 INFO Code found 0 warning(s)
+2026-10-02 23:11:56,575 INFO No failed pipelines, skipping the agents. Overall status: Healthy
+2026-10-02 23:11:56,579 INFO Report saved to output/all_healthy.md

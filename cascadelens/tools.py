@@ -3,8 +3,7 @@ import logging
 log = logging.getLogger("cascadelens")
 from smolagents import tool
 
-from cascadelens.analysis import analyse
-from cascadelens.lineage import build_downstream, find_impacted
+from cascadelens.analysis import analyse, get_statuses
 from cascadelens.reader import read_logs
 from cascadelens.lineage import build_downstream, find_impacted, split_impacted
 
@@ -17,8 +16,7 @@ def get_pipeline_statuses(db_path: str) -> str:
         db_path: Path to the SQLite log database to analyse.
     """
     log.info("Tool called: get_pipeline_statuses")
-    result = analyse(db_path)
-    return json.dumps(result.statuses)
+    return json.dumps(get_statuses(db_path))
 
 
 @tool

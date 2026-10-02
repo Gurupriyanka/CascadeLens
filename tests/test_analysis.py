@@ -1,6 +1,6 @@
 from datetime import date
 
-from cascadelens.analysis import analyse, build_failures, build_warnings
+from cascadelens.analysis import analyse, build_failures, build_warnings, get_statuses
 from cascadelens.lineage import find_impacted
 from cascadelens.lineage import find_impacted, split_impacted
 from cascadelens.reader import read_logs
@@ -17,7 +17,8 @@ def test_noisy_recurring_end_to_end():
     result = analyse("cascadelens/scripts/data/noisy_recurring.db")
 
     assert result.today == date(2026, 10, 1)
-    assert result.statuses["PL_04_Cur_Execute_Scripts"] == "Partially Failed"
+    statuses = get_statuses("cascadelens/scripts/data/noisy_recurring.db")
+    assert statuses["PL_04_Cur_Execute_Scripts"] == "Partially Failed"
 
     # sales retries are noise, so only the customer_dal defect remains today
     assert len(result.failure_groups) == 1
@@ -30,8 +31,9 @@ def test_noisy_recurring_end_to_end():
 def test_clean_cascade_impact_stays_inside_the_customer_and_sales_chains():
     result = analyse("cascadelens/scripts/data/clean_cascade.db")
 
-    assert result.statuses["PL_01_Ingest_Crm"] == "Failed"
-    assert result.statuses["PL_03_Ingest_Inventory"] == "Healthy"
+    statuses = get_statuses("cascadelens/scripts/data/clean_cascade.db")
+    assert statuses["PL_01_Ingest_Crm"] == "Failed"
+    assert statuses["PL_03_Ingest_Inventory"] == "Healthy"
 
     (group,) = result.failure_groups.values()
     assert group[0].unit_name == "Ingest_customer_ingestion"
@@ -44,7 +46,7 @@ def test_all_healthy_has_no_failures_and_no_issues():
     result = analyse("cascadelens/scripts/data/all_healthy.db")
 
     assert result.failure_groups == {}
-    assert set(result.statuses.values()) == {"Healthy"}
+    assert set(get_statuses("cascadelens/scripts/data/all_healthy.db").values()) == {"Healthy"}
 
 
 def test_ambiguous_has_two_failures_and_a_flagged_empty_load():
@@ -54,8 +56,9 @@ def test_ambiguous_has_two_failures_and_a_flagged_empty_load():
         r.unit_name for group in result.failure_groups.values() for r in group
     }
     assert failed_units == {"sales_curation", "inventory_dal"}
-    assert result.statuses["PL_02_Ingest_Sales"] == "Succeeded with Issues"
-    assert result.statuses["PL_04_Cur_Execute_Scripts"] == "Partially Failed"
+    statuses = get_statuses("cascadelens/scripts/data/ambiguous.db")
+    assert statuses["PL_02_Ingest_Sales"] == "Succeeded with Issues"
+    assert statuses["PL_04_Cur_Execute_Scripts"] == "Partially Failed"
 
 def test_clean_cascade_splits_confirmed_from_at_risk():
     path = "cascadelens/scripts/data/clean_cascade.db"
