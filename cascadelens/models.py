@@ -1,20 +1,6 @@
 from datetime import datetime
-from dbm import sqlite3
-from enum import Enum
-from datetime import datetime
-
-class Layer(str, Enum):
-    INGESTION = "ingestion"
-    CURATION = "curation"
-    SEMANTIC = "semantic"
-
-class RunStatus(str, Enum):
-    SUCCESS = "Succeeded"
-    FAILED = "Failed"
-    OTHER = "other"     # running, cancelled, skipped
-
+import sqlite3
 from dataclasses import dataclass
-
 
 @dataclass(frozen=True)
 class LogRecord:
