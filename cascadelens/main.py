@@ -1,7 +1,7 @@
 import json
 import sys
 
-from cascadelens.agents import build_orchestrator
+from cascadelens.agents import TOKENS, build_orchestrator
 from cascadelens.tools import get_pipeline_statuses
 from pathlib import Path
 from cascadelens.report import TriageReport, render_markdown
@@ -99,6 +99,7 @@ def triage(db_path: str) -> TriageReport:
         raise RuntimeError("The agent did not return a valid report after 2 attempts")
     report.warnings = warnings
     log.info("Report valid with %d failure(s)", len(report.failures))
+    log.info("Total tokens used: input %d, output %d", TOKENS["input"], TOKENS["output"])
     return report
 
 

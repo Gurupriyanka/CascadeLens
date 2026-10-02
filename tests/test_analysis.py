@@ -5,6 +5,13 @@ from cascadelens.lineage import find_impacted
 from cascadelens.lineage import find_impacted, split_impacted
 from cascadelens.reader import read_logs
 
+import json
+
+import pytest
+from pydantic import ValidationError
+
+from cascadelens.main import check_db_path, parse_report
+
 
 def test_noisy_recurring_end_to_end():
     result = analyse("cascadelens/scripts/data/noisy_recurring.db")
@@ -90,3 +97,23 @@ def test_build_warnings_links_the_empty_load_to_its_downstream_tables():
     (warning,) = build_warnings(analysis, records, failures)
     assert warning.empty_table == "sales_ingestion"
     assert warning.at_risk == ["sales_curation", "sales_dal"]
+
+def test_check_db_path_exits_with_a_clear_message():
+    # sys.exit("text") raises SystemExit, so pytest.raises can catch it
+    with pytest.raises(SystemExit) as err:
+        check_db_path("nothere.db")
+    assert "database file not found" in str(err.value)
+
+
+def test_parse_report_rejects_bad_output_and_accepts_a_fenced_answer():
+    # text that is not JSON at all
+    with pytest.raises(json.JSONDecodeError):
+        parse_report("not json")
+
+    # valid JSON, but a string where a list is expected
+    with pytest.raises(ValidationError):
+        parse_report({"database": "x.db", "overall_status": "Healthy", "failures": "oops"})
+
+    # models often wrap the answer in a markdown fence, which parse_report strips
+    fenced = '```json\n{"database": "x.db", "overall_status": "Healthy"}\n```'
+    assert parse_report(fenced).overall_status == "Healthy"

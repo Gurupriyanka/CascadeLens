@@ -3,7 +3,8 @@ import sys
 import logging
 from pydantic import ValidationError
 from cascadelens.main import check_db_path, parse_report, setup_logging
-from smolagents import OpenAIModel, ToolCallingAgent
+from smolagents import ToolCallingAgent
+from cascadelens.agents import TOKENS, CountingModel
 
 from cascadelens.analysis import analyse, build_failures, build_warnings
 from cascadelens.reader import read_logs
@@ -61,7 +62,7 @@ def triage_single(db_path: str) -> TriageReport:
         log.info("Single agent baseline: running the agent (attempt %d)", attempt)
         agent = ToolCallingAgent(
             tools=[get_pipeline_statuses, get_failure_groups, get_impacted_tables, split_impacted_tables],
-            model=OpenAIModel(model_id="gpt-4o-mini"),
+            model=CountingModel(model_id="gpt-4o-mini"),
         )
         raw = agent.run(task)
         log.info("Agent finished, validating the answer")
@@ -74,6 +75,7 @@ def triage_single(db_path: str) -> TriageReport:
         raise RuntimeError("The agent did not return a valid report after 2 attempts")
     report.warnings = warnings
     log.info("Report valid with %d failure(s)", len(report.failures))
+    log.info("Total tokens used: input %d, output %d", TOKENS["input"], TOKENS["output"])
     return report
 
 
