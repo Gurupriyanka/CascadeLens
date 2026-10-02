@@ -8,6 +8,11 @@ from cascadelens.report import TriageReport, render_markdown
 from cascadelens.analysis import analyse, build_failures, build_warnings
 from cascadelens.reader import read_logs
 
+def check_db_path(db_path: str) -> None:
+    """Stop with a clear message if the database file does not exist."""
+    if not Path(db_path).is_file():
+        sys.exit(f"Error: database file not found: {db_path}")
+
 def triage(db_path: str) -> TriageReport:
     """Check the statuses first. Stop early when everything is Healthy."""
     statuses = json.loads(get_pipeline_statuses(db_path))
@@ -63,6 +68,7 @@ def triage(db_path: str) -> TriageReport:
 
 def main() -> None:
     db_path = sys.argv[1]
+    check_db_path(db_path)
     report = triage(db_path)
     print(report.model_dump_json(indent=2))
 
