@@ -1,5 +1,6 @@
 import json
-
+import logging
+log = logging.getLogger("cascadelens")
 from smolagents import tool
 
 from cascadelens.analysis import analyse
@@ -15,6 +16,7 @@ def get_pipeline_statuses(db_path: str) -> str:
     Args:
         db_path: Path to the SQLite log database to analyse.
     """
+    log.info("Tool called: get_pipeline_statuses")
     result = analyse(db_path)
     return json.dumps(result.statuses)
 
@@ -26,6 +28,7 @@ def get_failure_groups(db_path: str) -> str:
     Args:
         db_path: Path to the SQLite log database to analyse.
     """
+    log.info("Tool called: get_failure_groups")
     result = analyse(db_path)
     groups = []
     for signature, records in result.failure_groups.items():
@@ -49,6 +52,7 @@ def get_impacted_tables(db_path: str, failed_table: str) -> str:
         db_path: Path to the SQLite log database to analyse.
         failed_table: Name of the table that failed, for example customer_ingestion.
     """
+    log.info("Tool called: get_impacted_tables for failed_table=%s", failed_table)
     records = read_logs(db_path)
     downstream = build_downstream(records)
     impacted = find_impacted(downstream, failed_table)
@@ -66,6 +70,7 @@ def split_impacted_tables(db_path: str, impacted_tables: list[str]) -> str:
         db_path: Path to the SQLite log database to analyse.
         impacted_tables: The list of table names returned by get_impacted_tables.
     """
+    log.info("Tool called: split_impacted_tables(impacted_tables=%s)", impacted_tables)
     records = read_logs(db_path)
     today = analyse(db_path).today
     confirmed, at_risk = split_impacted(records, set(impacted_tables), today)

@@ -1,6 +1,8 @@
 import json
 import sys
-
+import logging
+from pydantic import ValidationError
+from cascadelens.main import check_db_path, parse_report, setup_logging
 from smolagents import OpenAIModel, ToolCallingAgent
 
 from cascadelens.analysis import analyse, build_failures, build_warnings
@@ -12,16 +14,19 @@ from cascadelens.tools import (
     get_pipeline_statuses,
     split_impacted_tables,
 )
-
+log = logging.getLogger("cascadelens")
 
 def triage_single(db_path: str) -> TriageReport:
     """Baseline: one agent with all four tools, plus the same early exit and validation."""
     statuses = json.loads(get_pipeline_statuses(db_path))
+    log.info("Single agent baseline: pipeline statuses: %s", statuses)
     analysis, records = analyse(db_path), read_logs(db_path)
     warnings = build_warnings(analysis, records, build_failures(analysis, records))
+    log.info("Code found %d warning(s)", len(warnings))
     broken = any(s in ("Failed", "Partially Failed") for s in statuses.values())
     if not broken:
         status = "Unhealthy" if warnings else "Healthy"
+        log.info("No failed pipelines, skipping the agent. Overall status: %s", status)
         return TriageReport(database=db_path, overall_status=status, warnings=warnings)
 
     example = {
@@ -51,20 +56,32 @@ def triage_single(db_path: str) -> TriageReport:
         "with the real values you found. Do not add a description or properties wrapper. "
         f"Shape: {json.dumps(example)}"
     )
-    agent = ToolCallingAgent(
-        tools=[get_pipeline_statuses, get_failure_groups, get_impacted_tables, split_impacted_tables],
-        model=OpenAIModel(model_id="gpt-4o-mini"),
-    )
-    raw = agent.run(task)
-    if isinstance(raw, dict):
-        data = raw
-    else:
-        text = str(raw).strip().removeprefix("```json").removeprefix("```").removesuffix("```")
-        data = json.loads(text)
-    report = TriageReport.model_validate(data)
+    report = None
+    for attempt in (1, 2):
+        log.info("Single agent baseline: running the agent (attempt %d)", attempt)
+        agent = ToolCallingAgent(
+            tools=[get_pipeline_statuses, get_failure_groups, get_impacted_tables, split_impacted_tables],
+            model=OpenAIModel(model_id="gpt-4o-mini"),
+        )
+        raw = agent.run(task)
+        log.info("Agent finished, validating the answer")
+        try:
+            report = parse_report(raw)
+            break
+        except (json.JSONDecodeError, ValidationError) as err:
+            log.warning("Invalid model output on attempt %d: %s", attempt, err)
+    if report is None:
+        raise RuntimeError("The agent did not return a valid report after 2 attempts")
     report.warnings = warnings
+    log.info("Report valid with %d failure(s)", len(report.failures))
     return report
 
 
 if __name__ == "__main__":
-    print(triage_single(sys.argv[1]).model_dump_json(indent=2))
+    setup_logging()
+    check_db_path(sys.argv[1])
+    try:
+        print(triage_single(sys.argv[1]).model_dump_json(indent=2))
+    except Exception as err:
+        log.exception("Single agent triage failed")
+        sys.exit(f"Error: triage failed: {err}")

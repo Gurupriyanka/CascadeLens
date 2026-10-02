@@ -7,20 +7,48 @@ from pathlib import Path
 from cascadelens.report import TriageReport, render_markdown
 from cascadelens.analysis import analyse, build_failures, build_warnings
 from cascadelens.reader import read_logs
+from pydantic import ValidationError
+import logging
+log = logging.getLogger("cascadelens")
+log.setLevel(logging.INFO)
 
 def check_db_path(db_path: str) -> None:
     """Stop with a clear message if the database file does not exist."""
     if not Path(db_path).is_file():
         sys.exit(f"Error: database file not found: {db_path}")
 
+def setup_logging() -> None:
+    """Log to the terminal and to output/cascadelens.log."""
+    out_dir = Path("output")
+    out_dir.mkdir(exist_ok=True)
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(asctime)s %(levelname)s %(message)s",
+        handlers=[logging.StreamHandler(), logging.FileHandler(out_dir / "cascadelens.log")],
+    )
+
+
+def parse_report(raw) -> TriageReport:
+    """Turn the agent's answer into a validated report. Raises on bad JSON or a wrong shape."""
+    # The model may return a dict, or text wrapped in a markdown code fence.
+    if isinstance(raw, dict):
+        data = raw
+    else:
+        text = str(raw).strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+        data = json.loads(text)
+    return TriageReport.model_validate(data)
+
 def triage(db_path: str) -> TriageReport:
     """Check the statuses first. Stop early when everything is Healthy."""
     statuses = json.loads(get_pipeline_statuses(db_path))
+    log.info("Pipeline statuses: %s", statuses)
     analysis, records = analyse(db_path), read_logs(db_path)
     warnings = build_warnings(analysis, records, build_failures(analysis, records))
+    log.info("Code found %d warning(s)", len(warnings))
     broken = any(s in ("Failed", "Partially Failed") for s in statuses.values())
     if not broken:
         status = "Unhealthy" if warnings else "Healthy"
+        log.info("No failed pipelines, skipping the agents. Overall status: %s", status)
         return TriageReport(database=db_path, overall_status=status, warnings=warnings)
 
     example_schema = {
@@ -54,30 +82,43 @@ def triage(db_path: str) -> TriageReport:
         "with the real values you found. Do not add a description or properties wrapper. "
         f"Shape: {json.dumps(example_schema)}"
     )
-    raw = build_orchestrator().run(task)
-    # The model may return a dict, or text wrapped in a markdown code fence.
-    if isinstance(raw, dict):
-        data = raw
-    else:
-        text = str(raw).strip().removeprefix("```json").removeprefix("```").removesuffix("```")
-        data = json.loads(text)
-    report = TriageReport.model_validate(data)
+
+    # Retry once if the model returns bad JSON or the wrong shape.
+    # A new orchestrator is built per attempt so no memory carries over.
+    report = None
+    for attempt in (1, 2):
+        log.info("Failures found, starting the orchestrator agent (attempt %d)", attempt)
+        raw = build_orchestrator().run(task)
+        log.info("Agent finished, validating the answer")
+        try:
+            report = parse_report(raw)
+            break
+        except (json.JSONDecodeError, ValidationError) as err:
+            log.warning("Invalid model output on attempt %d: %s", attempt, err)
+    if report is None:
+        raise RuntimeError("The agent did not return a valid report after 2 attempts")
     report.warnings = warnings
+    log.info("Report valid with %d failure(s)", len(report.failures))
     return report
 
 
 def main() -> None:
+    setup_logging()
     db_path = sys.argv[1]
     check_db_path(db_path)
-    report = triage(db_path)
+    log.info("Starting triage for %s", db_path)
+    try:
+        report = triage(db_path)
+    except Exception as err:
+        log.exception("Triage failed")  # writes the full traceback to the log file
+        sys.exit(f"Error: triage failed: {err}")
     print(report.model_dump_json(indent=2))
 
     # Save the markdown report as output/<database name>.md
-    out_dir = Path("output")
-    out_dir.mkdir(exist_ok=True)
-    out_file = out_dir / f"{Path(db_path).stem}.md"
+    out_file = Path("output") / f"{Path(db_path).stem}.md"
     out_file.write_text(render_markdown(report))
     print(f"Report saved to {out_file}")
+    log.info("Report saved to %s", out_file)
 
 
 if __name__ == "__main__":
