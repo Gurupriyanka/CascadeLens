@@ -39,18 +39,13 @@ def parse_report(raw) -> TriageReport:
     return TriageReport.model_validate(data)
 
 def triage(db_path: str) -> TriageReport:
-    """Check the statuses first. Stop early when everything is Healthy."""
+    """Check the statuses first. Stop early when every pipeline is Healthy."""
     statuses = json.loads(get_pipeline_statuses(db_path))
     log.info("Pipeline statuses: %s", statuses)
-    analysis, records = analyse(db_path), read_logs(db_path)
-    expected = build_failures(analysis, records)
-    warnings = build_warnings(analysis, records, expected)
-    log.info("Code found %d warning(s)", len(warnings))
-    broken = any(s in ("Failed", "Partially Failed") for s in statuses.values())
+    broken = any(s != "Healthy" for s in statuses.values())
     if not broken:
-        status = "Unhealthy" if warnings else "Healthy"
-        log.info("No failed pipelines, skipping the agents. Overall status: %s", status)
-        return TriageReport(database=db_path, overall_status=status, warnings=warnings)
+        log.info("All pipelines Healthy, skipping the agents")
+        return TriageReport(database=db_path, overall_status="Healthy")
 
     example_schema = {
         "database": db_path,
@@ -88,7 +83,7 @@ def triage(db_path: str) -> TriageReport:
     # A new orchestrator is built per attempt so no memory carries over.
     report = None
     for attempt in (1, 2):
-        log.info("Failures found, starting the orchestrator agent (attempt %d)", attempt)
+        log.info("Pipelines not all Healthy, starting the orchestrator agent (attempt %d)", attempt)
         raw = build_orchestrator().run(task)
         log.info("Agent finished, validating the answer")
         try:
@@ -98,7 +93,12 @@ def triage(db_path: str) -> TriageReport:
             log.warning("Invalid model output on attempt %d: %s", attempt, err)
     if report is None:
         raise RuntimeError("The agent did not return a valid report after 2 attempts")
-    report.warnings = warnings
+
+    # The code computes its answer key only now, after the agents have answered.
+    analysis, records = analyse(db_path), read_logs(db_path)
+    expected = build_failures(analysis, records)
+    report.warnings = build_warnings(analysis, records, expected)
+    log.info("Code found %d warning(s)", len(report.warnings))
     log.info("Report valid with %d failure(s)", len(report.failures))
     log.info("Check against code: %s", diff_failures(expected, report.failures) or "all facts match")
     log.info("Total tokens used: input %d, output %d", TOKENS["input"], TOKENS["output"])
