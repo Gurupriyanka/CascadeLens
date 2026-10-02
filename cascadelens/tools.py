@@ -55,19 +55,18 @@ def get_impacted_tables(db_path: str, failed_table: str) -> str:
     return json.dumps(sorted(impacted))
 
 @tool
-def split_impacted_tables(db_path: str, failed_table: str) -> str:
-    """Split the tables below the root cause table into confirmed impact and at risk.
+def split_impacted_tables(db_path: str, impacted_tables: list[str]) -> str:
+    """Split a list of impacted tables into confirmed impact and at risk.
 
-    Call this once, with the root cause table only. Never call it for tables that are only impacted downstream.
+    Call this after get_impacted_tables, passing its result unchanged as impacted_tables.
     Confirmed means the table ran today but wrote 0 rows although it normally writes rows.
-    At risk means everything else below the failure.
+    At risk means every other table in the list.
 
     Args:
         db_path: Path to the SQLite log database to analyse.
-        failed_table: The root cause table where the failure started, for example customer_ingestion.
+        impacted_tables: The list of table names returned by get_impacted_tables.
     """
     records = read_logs(db_path)
     today = analyse(db_path).today
-    impacted = find_impacted(build_downstream(records), failed_table)
-    confirmed, at_risk = split_impacted(records, impacted, today)
+    confirmed, at_risk = split_impacted(records, set(impacted_tables), today)
     return json.dumps({"confirmed": sorted(confirmed), "at_risk": sorted(at_risk)})

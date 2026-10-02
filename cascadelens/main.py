@@ -1,14 +1,8 @@
 import json
 import sys
 
-from smolagents import OpenAIModel, ToolCallingAgent
-
-from cascadelens.tools import (
-    get_failure_groups,
-    get_impacted_tables,
-    get_pipeline_statuses,
-    split_impacted_tables,
-)
+from cascadelens.agents import build_orchestrator
+from cascadelens.tools import get_pipeline_statuses
 
 
 def triage(db_path: str) -> str:
@@ -17,22 +11,15 @@ def triage(db_path: str) -> str:
     if all(status == "Healthy" for status in statuses.values()):
         return "All pipelines are Healthy. No failures, no impact."
 
-    agent = ToolCallingAgent(
-        tools=[
-            get_pipeline_statuses,
-            get_failure_groups,
-            get_impacted_tables,
-            split_impacted_tables,
-        ],
-        model=OpenAIModel(model_id="gpt-4o-mini"),
-    )
     task = (
-        f"Use the database at {db_path}. "
-        "Find the root cause of today's failure and which tables are confirmed impacted or at risk. "
-        "Call the analysis tools first and read their results. "
-        "Call final_answer alone, in a separate step, only after you have seen all tool results."
+        f"Investigate the database at {db_path}. "
+        "First check the pipeline statuses. "
+        "Then ask triage_agent for the failed table and the error. "
+        "Then ask lineage_agent for the confirmed and at risk tables, "
+        "giving it the database path and the failed table. "
+        "Call final_answer alone, after you have seen all results."
     )
-    return str(agent.run(task))
+    return str(build_orchestrator().run(task))
 
 
 def main() -> None:

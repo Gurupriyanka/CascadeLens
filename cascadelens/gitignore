@@ -9,3 +9,4 @@ output/
 data/*.db
 .vscode/
 cascadelens.egg-info
+cascadelens/__pycache__/
