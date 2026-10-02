@@ -15,7 +15,7 @@
 ## Failure 2: inventory_dal
 
 - **Root cause:** AnalysisException: cannot resolve 'reorder_level' given input columns [item_id, qty, warehouse].
-- **Recurrence:** 0 of the last 7 days
+- **Recurrence:** 1 of the last 7 days
 
 ## Warnings
 

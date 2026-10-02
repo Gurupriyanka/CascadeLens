@@ -1,0 +1,30 @@
+multi run 1
+2026-10-02 21:30:43,813 INFO Check against code: all facts match
+2026-10-02 21:30:43,813 INFO Total tokens used: input 20261, output 1351
+multi run 2
+2026-10-02 21:31:12,114 INFO Check against code: all facts match
+2026-10-02 21:31:12,114 INFO Total tokens used: input 20214, output 1342
+multi run 3
+2026-10-02 21:31:53,168 INFO Check against code: all facts match
+2026-10-02 21:31:53,168 INFO Total tokens used: input 36042, output 2060
+multi run 4
+2026-10-02 21:32:17,313 INFO Check against code: ['missing failure: inventory_dal', 'missing failure: sales_curation', 'unexpected failure: Inventory DAL', 'unexpected failure: Sales Curation']
+2026-10-02 21:32:17,313 INFO Total tokens used: input 20218, output 1290
+multi run 5
+2026-10-02 21:32:42,660 INFO Check against code: all facts match
+2026-10-02 21:32:42,661 INFO Total tokens used: input 20021, output 1237
+multi run 6
+2026-10-02 21:33:23,939 INFO Check against code: ['missing failure: inventory_dal', 'missing failure: sales_curation', 'unexpected failure: Sales Curation']
+2026-10-02 21:33:23,939 INFO Total tokens used: input 32615, output 2049
+multi run 7
+2026-10-02 21:33:51,612 INFO Check against code: all facts match
+2026-10-02 21:33:51,612 INFO Total tokens used: input 20090, output 1274
+multi run 8
+2026-10-02 21:34:32,672 INFO Check against code: all facts match
+2026-10-02 21:34:32,672 INFO Total tokens used: input 35826, output 2176
+multi run 9
+2026-10-02 21:34:58,439 INFO Check against code: ['missing failure: inventory_dal']
+2026-10-02 21:34:58,439 INFO Total tokens used: input 20318, output 1332
+multi run 10
+2026-10-02 21:35:23,040 INFO Check against code: all facts match
+2026-10-02 21:35:23,040 INFO Total tokens used: input 19966, output 1188

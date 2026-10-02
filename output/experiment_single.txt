@@ -1,0 +1,30 @@
+single run 1
+2026-10-02 21:37:36,659 INFO Check against code: all facts match
+2026-10-02 21:37:36,659 INFO Total tokens used: input 9868, output 348
+single run 2
+2026-10-02 21:37:46,029 INFO Check against code: ["inventory_dal: confirmed ['sales_dal'], expected []", "sales_curation: confirmed [], expected ['sales_dal']"]
+2026-10-02 21:37:46,029 INFO Total tokens used: input 9883, output 348
+single run 3
+2026-10-02 21:37:54,796 INFO Check against code: all facts match
+2026-10-02 21:37:54,796 INFO Total tokens used: input 9902, output 348
+single run 4
+2026-10-02 21:38:04,728 INFO Check against code: ["inventory_dal: confirmed ['sales_dal'], expected []", "sales_curation: confirmed [], expected ['sales_dal']"]
+2026-10-02 21:38:04,728 INFO Total tokens used: input 9889, output 348
+single run 5
+2026-10-02 21:38:14,351 INFO Check against code: ['missing failure: inventory_dal']
+2026-10-02 21:38:14,351 INFO Total tokens used: input 9888, output 299
+single run 6
+2026-10-02 21:38:23,885 INFO Check against code: ["inventory_dal: confirmed ['sales_dal'], expected []", "sales_curation: confirmed [], expected ['sales_dal']", "sales_curation: at risk ['sales_dal'], expected []"]
+2026-10-02 21:38:23,885 INFO Total tokens used: input 9888, output 352
+single run 7
+2026-10-02 21:38:31,876 INFO Check against code: all facts match
+2026-10-02 21:38:31,876 INFO Total tokens used: input 9794, output 315
+single run 8
+2026-10-02 21:38:40,936 INFO Check against code: ["inventory_dal: confirmed ['sales_dal'], expected []", "sales_curation: confirmed [], expected ['sales_dal']", "sales_curation: at risk ['sales_dal'], expected []"]
+2026-10-02 21:38:40,936 INFO Total tokens used: input 9900, output 349
+single run 9
+2026-10-02 21:38:50,252 INFO Check against code: ['missing failure: sales_curation', "inventory_dal: confirmed ['sales_dal'], expected []"]
+2026-10-02 21:38:50,252 INFO Total tokens used: input 9875, output 348
+single run 10
+2026-10-02 21:38:59,469 INFO Check against code: all facts match
+2026-10-02 21:38:59,470 INFO Total tokens used: input 9891, output 348
