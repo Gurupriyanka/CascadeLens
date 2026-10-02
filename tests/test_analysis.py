@@ -117,3 +117,17 @@ def test_parse_report_rejects_bad_output_and_accepts_a_fenced_answer():
     # models often wrap the answer in a markdown fence, which parse_report strips
     fenced = '```json\n{"database": "x.db", "overall_status": "Healthy"}\n```'
     assert parse_report(fenced).overall_status == "Healthy"
+
+
+from cascadelens.report import diff_failures
+
+def test_diff_failures_finds_wrong_facts():
+    path = "cascadelens/scripts/data/ambiguous.db"
+    expected = build_failures(analyse(path), read_logs(path))
+
+    # identical lists have no problems
+    assert diff_failures(expected, expected) == []
+
+    # drop one failure and change a recurrence: two problems
+    wrong = [expected[0].model_copy(update={"recurrence_days": 99})]
+    assert len(diff_failures(expected, wrong)) == 2

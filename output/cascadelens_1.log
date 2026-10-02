@@ -1,0 +1,48 @@
+2026-10-02 20:46:03,636 INFO Starting triage for cascadelens/scripts/data/all_healthy.db
+2026-10-02 20:46:36,837 INFO Starting triage for cascadelens/scripts/data/noisy_recurring.db
+2026-10-02 20:52:03,477 INFO Starting triage for cascadelens/scripts/data/all_healthy.db
+2026-10-02 20:52:03,480 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Healthy'}
+2026-10-02 20:52:03,485 INFO Code found 0 warning(s)
+2026-10-02 20:52:03,487 INFO No failed pipelines, skipping the agents. Overall status: Healthy
+2026-10-02 20:52:03,487 INFO Report saved to output/all_healthy.md
+2026-10-02 20:52:04,563 INFO Starting triage for cascadelens/scripts/data/noisy_recurring.db
+2026-10-02 20:52:04,566 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Succeeded with Issues', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Partially Failed'}
+2026-10-02 20:52:04,571 INFO Code found 0 warning(s)
+2026-10-02 20:52:04,572 INFO Failures found, starting the orchestrator agent
+2026-10-02 20:53:04,739 INFO Agent finished, validating the answer
+2026-10-02 20:53:04,739 INFO Report valid with 1 failure(s)
+2026-10-02 20:53:04,739 INFO Report saved to output/noisy_recurring.md
+2026-10-02 21:02:39,034 INFO Tool called: get_pipeline_statuses
+2026-10-02 21:02:39,040 INFO Single agent baseline: pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Healthy'}
+2026-10-02 21:02:39,044 INFO Code found 0 warning(s)
+2026-10-02 21:02:39,044 INFO No failed pipelines, skipping the agent. Overall status: Healthy
+2026-10-02 21:02:41,527 INFO Starting triage for cascadelens/scripts/data/noisy_recurring.db
+2026-10-02 21:02:41,527 INFO Tool called: get_pipeline_statuses
+2026-10-02 21:02:41,529 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Succeeded with Issues', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Partially Failed'}
+2026-10-02 21:02:41,532 INFO Code found 0 warning(s)
+2026-10-02 21:02:41,532 INFO Failures found, starting the orchestrator agent (attempt 1)
+2026-10-02 21:02:43,833 INFO Tool called: get_pipeline_statuses
+2026-10-02 21:02:47,246 INFO Tool called: get_failure_groups
+2026-10-02 21:02:56,191 INFO Tool called: get_impacted_tables for failed_table=customer_dal
+2026-10-02 21:02:59,015 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-02 21:03:03,434 INFO Tool called: get_impacted_tables for failed_table=customer_dal
+2026-10-02 21:03:04,374 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-02 21:03:11,048 INFO Tool called: get_impacted_tables for failed_table=PL_02_Ingest_Sales
+2026-10-02 21:03:15,824 INFO Tool called: get_impacted_tables for failed_table=PL_02_Ingest_Sales
+2026-10-02 21:03:17,274 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-02 21:03:24,182 INFO Agent finished, validating the answer
+2026-10-02 21:03:24,182 INFO Report valid with 1 failure(s)
+2026-10-02 21:03:24,183 INFO Report saved to output/noisy_recurring.md
+2026-10-02 21:14:08,185 INFO Starting triage for cascadelens/scripts/data/noisy_recurring.db
+2026-10-02 21:14:08,187 INFO Tool called: get_pipeline_statuses
+2026-10-02 21:14:08,193 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Succeeded with Issues', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Partially Failed'}
+2026-10-02 21:14:08,197 INFO Code found 0 warning(s)
+2026-10-02 21:14:08,197 INFO Failures found, starting the orchestrator agent (attempt 1)
+2026-10-02 21:14:10,552 INFO Tool called: get_pipeline_statuses
+2026-10-02 21:14:13,614 INFO Tool called: get_failure_groups
+2026-10-02 21:14:21,774 INFO Tool called: get_impacted_tables for failed_table=customer_dal
+2026-10-02 21:14:23,083 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-02 21:14:29,863 INFO Agent finished, validating the answer
+2026-10-02 21:14:29,863 INFO Report valid with 1 failure(s)
+2026-10-02 21:14:29,863 INFO Total tokens used: input 15473, output 931
+2026-10-02 21:14:29,864 INFO Report saved to output/noisy_recurring.md

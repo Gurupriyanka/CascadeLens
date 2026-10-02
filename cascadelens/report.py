@@ -53,3 +53,26 @@ def render_markdown(report: TriageReport) -> str:
             lines.append(f"- {w.pipeline}: {w.empty_table} loaded 0 rows, at risk: {', '.join(w.at_risk) or 'none'}")
     return "\n".join(lines) + "\n"
 
+def diff_failures(expected: list[Failure], actual: list[Failure]) -> list[str]:
+    """List every fact the agent got wrong. An empty list means fully correct.
+
+    Compares only facts that code can compute. root_cause is wording, so it is skipped.
+    """
+    want = {f.failed_table: f for f in expected}
+    got = {f.failed_table: f for f in actual}
+    problems = []
+    if len(got) != len(actual):
+        problems.append("duplicate failure entries")
+    for table in sorted(want.keys() - got.keys()):
+        problems.append(f"missing failure: {table}")
+    for table in sorted(got.keys() - want.keys()):
+        problems.append(f"unexpected failure: {table}")
+    for table in sorted(want.keys() & got.keys()):
+        w, g = want[table], got[table]
+        if w.recurrence_days != g.recurrence_days:
+            problems.append(f"{table}: recurrence {g.recurrence_days}, expected {w.recurrence_days}")
+        if sorted(w.confirmed_impacted) != sorted(g.confirmed_impacted):
+            problems.append(f"{table}: confirmed {g.confirmed_impacted}, expected {w.confirmed_impacted}")
+        if sorted(w.at_risk) != sorted(g.at_risk):
+            problems.append(f"{table}: at risk {g.at_risk}, expected {w.at_risk}")
+    return problems

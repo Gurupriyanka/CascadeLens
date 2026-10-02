@@ -4,7 +4,7 @@ import sys
 from cascadelens.agents import TOKENS, build_orchestrator
 from cascadelens.tools import get_pipeline_statuses
 from pathlib import Path
-from cascadelens.report import TriageReport, render_markdown
+from cascadelens.report import TriageReport, diff_failures, render_markdown
 from cascadelens.analysis import analyse, build_failures, build_warnings
 from cascadelens.reader import read_logs
 from pydantic import ValidationError
@@ -43,7 +43,8 @@ def triage(db_path: str) -> TriageReport:
     statuses = json.loads(get_pipeline_statuses(db_path))
     log.info("Pipeline statuses: %s", statuses)
     analysis, records = analyse(db_path), read_logs(db_path)
-    warnings = build_warnings(analysis, records, build_failures(analysis, records))
+    expected = build_failures(analysis, records)
+    warnings = build_warnings(analysis, records, expected)
     log.info("Code found %d warning(s)", len(warnings))
     broken = any(s in ("Failed", "Partially Failed") for s in statuses.values())
     if not broken:
@@ -99,6 +100,7 @@ def triage(db_path: str) -> TriageReport:
         raise RuntimeError("The agent did not return a valid report after 2 attempts")
     report.warnings = warnings
     log.info("Report valid with %d failure(s)", len(report.failures))
+    log.info("Check against code: %s", diff_failures(expected, report.failures) or "all facts match")
     log.info("Total tokens used: input %d, output %d", TOKENS["input"], TOKENS["output"])
     return report
 
