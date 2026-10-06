@@ -349,3 +349,118 @@
 2026-10-02 23:20:55,630 INFO Tool called: get_pipeline_statuses
 2026-10-02 23:20:55,632 INFO Single agent baseline: pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Healthy'}
 2026-10-02 23:20:55,632 INFO All pipelines Healthy, skipping the agent
+2026-10-06 19:32:31,231 INFO Starting triage for cascadelens/scripts/data/clean_cascade.db
+2026-10-06 19:32:31,231 INFO Tool called: get_pipeline_statuses
+2026-10-06 19:32:31,290 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Failed', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Succeeded with Issues'}
+2026-10-06 19:32:31,290 INFO Pipelines not all Healthy, starting the orchestrator agent (attempt 1)
+2026-10-06 19:32:37,300 INFO Tool called: get_pipeline_statuses
+2026-10-06 19:32:47,659 INFO Tool called: get_failure_groups
+2026-10-06 19:33:03,134 INFO Tool called: get_impacted_tables for failed_table=customer_ingestion
+2026-10-06 19:33:07,891 INFO Tool called: split_impacted_tables(impacted_tables=['customer_curation', 'customer_dal', 'sales_curation', 'sales_dal'])
+2026-10-06 19:33:19,372 INFO Agent finished, validating the answer
+2026-10-06 19:33:19,376 INFO Code found 0 warning(s)
+2026-10-06 19:33:19,376 INFO Report valid with 1 failure(s)
+2026-10-06 19:33:19,376 INFO Check against code: all facts match
+2026-10-06 19:33:19,376 INFO Total tokens used: input 15674, output 908
+2026-10-06 19:33:19,377 INFO Report saved to output/clean_cascade.md
+2026-10-06 22:36:47,988 INFO Starting triage for cascadelens/scripts/data/same_error_three_tables.db
+2026-10-06 22:36:47,989 INFO Tool called: get_pipeline_statuses
+2026-10-06 22:36:47,990 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Failed'}
+2026-10-06 22:36:47,990 INFO Pipelines not all Healthy, starting the orchestrator agent (attempt 1)
+2026-10-06 22:36:53,876 INFO Tool called: get_pipeline_statuses
+2026-10-06 22:37:03,503 INFO Tool called: get_failure_groups
+2026-10-06 22:37:21,014 INFO Tool called: get_impacted_tables for failed_table=customer_dal
+2026-10-06 22:37:25,348 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 22:37:35,023 INFO Tool called: get_impacted_tables for failed_table=inventory_dal
+2026-10-06 22:37:38,811 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 22:37:47,904 INFO Tool called: get_impacted_tables for failed_table=sales_dal
+2026-10-06 22:37:51,698 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 22:38:02,709 INFO Agent finished, validating the answer
+2026-10-06 22:38:02,712 INFO Code found 0 warning(s)
+2026-10-06 22:38:02,712 INFO Report valid with 3 failure(s)
+2026-10-06 22:38:02,713 INFO Check against code: all facts match
+2026-10-06 22:38:02,713 INFO Total tokens used: input 24927, output 1666
+2026-10-06 22:38:02,713 INFO Report saved to output/same_error_three_tables.md
+2026-10-06 22:38:04,233 INFO Starting triage for cascadelens/scripts/data/same_cause_different_words.db
+2026-10-06 22:38:04,233 INFO Tool called: get_pipeline_statuses
+2026-10-06 22:38:04,234 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Failed'}
+2026-10-06 22:38:04,235 INFO Pipelines not all Healthy, starting the orchestrator agent (attempt 1)
+2026-10-06 22:38:08,692 INFO Tool called: get_pipeline_statuses
+2026-10-06 22:38:16,799 INFO Tool called: get_failure_groups
+2026-10-06 22:38:33,737 INFO Tool called: get_impacted_tables for failed_table=customer_dal
+2026-10-06 22:38:37,527 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 22:38:46,864 INFO Tool called: get_impacted_tables for failed_table=sales_dal
+2026-10-06 22:38:50,678 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 22:38:59,943 INFO Tool called: get_impacted_tables for failed_table=inventory_dal
+2026-10-06 22:39:11,254 INFO Agent finished, validating the answer
+2026-10-06 22:39:11,257 INFO Code found 0 warning(s)
+2026-10-06 22:39:11,257 INFO Report valid with 3 failure(s)
+2026-10-06 22:39:11,257 INFO Check against code: all facts match
+2026-10-06 22:39:11,257 INFO Total tokens used: input 24051, output 1851
+2026-10-06 22:39:11,257 INFO Report saved to output/same_cause_different_words.md
+2026-10-06 22:52:37,868 INFO Starting triage for cascadelens/scripts/data/cascade_with_downstream_error.db
+2026-10-06 22:52:37,869 INFO Tool called: get_pipeline_statuses
+2026-10-06 22:52:37,871 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Failed', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Partially Failed'}
+2026-10-06 22:52:37,871 INFO Pipelines not all Healthy, starting the orchestrator agent (attempt 1)
+2026-10-06 22:52:40,183 INFO Tool called: get_pipeline_statuses
+2026-10-06 22:52:43,108 INFO Tool called: get_failure_groups
+2026-10-06 22:52:52,326 INFO Tool called: get_impacted_tables for failed_table=sales_ingestion
+2026-10-06 22:52:54,425 INFO Tool called: split_impacted_tables(impacted_tables=['sales_curation', 'sales_dal'])
+2026-10-06 22:53:00,460 INFO Tool called: get_impacted_tables for failed_table=sales_curation
+2026-10-06 22:53:02,020 INFO Tool called: split_impacted_tables(impacted_tables=['sales_dal'])
+2026-10-06 22:53:06,227 INFO Tool called: get_impacted_tables for failed_table=inventory_dal
+2026-10-06 22:53:07,882 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 22:53:14,373 INFO Agent finished, validating the answer
+2026-10-06 22:53:14,376 INFO Code found 0 warning(s)
+2026-10-06 22:53:14,376 INFO Report valid with 3 failure(s)
+2026-10-06 22:53:14,376 INFO Check against code: ['unexpected failure: sales_curation']
+2026-10-06 22:53:14,376 INFO Total tokens used: input 25354, output 1869
+2026-10-06 22:53:14,377 INFO Report saved to output/cascade_with_downstream_error.md
+2026-10-06 23:00:36,050 INFO Starting triage for cascadelens/scripts/data/recurring_plus_new.db
+2026-10-06 23:00:36,051 INFO Tool called: get_pipeline_statuses
+2026-10-06 23:00:36,052 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Partially Failed'}
+2026-10-06 23:00:36,053 INFO Pipelines not all Healthy, starting the orchestrator agent (attempt 1)
+2026-10-06 23:00:38,351 INFO Tool called: get_pipeline_statuses
+2026-10-06 23:00:41,703 INFO Tool called: get_failure_groups
+2026-10-06 23:00:50,260 INFO Tool called: get_impacted_tables for failed_table=Inventory curation
+2026-10-06 23:00:51,636 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 23:00:56,637 INFO Tool called: get_impacted_tables for failed_table=Customer data access layer
+2026-10-06 23:00:57,965 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 23:01:04,169 INFO Agent finished, validating the answer
+2026-10-06 23:01:04,172 INFO Code found 0 warning(s)
+2026-10-06 23:01:04,172 INFO Report valid with 2 failure(s)
+2026-10-06 23:01:04,172 INFO Check against code: ['missing failure: customer_dal', 'missing failure: inventory_curation', 'unexpected failure: Customer data access layer', 'unexpected failure: Inventory curation']
+2026-10-06 23:01:04,172 INFO Total tokens used: input 20339, output 1379
+2026-10-06 23:01:04,173 INFO Report saved to output/recurring_plus_new.md
+2026-10-06 23:03:18,851 INFO Starting triage for cascadelens/scripts/data/retries_plus_one_real.db
+2026-10-06 23:03:18,852 INFO Tool called: get_pipeline_statuses
+2026-10-06 23:03:18,854 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Succeeded with Issues', 'PL_02_Ingest_Sales': 'Succeeded with Issues', 'PL_03_Ingest_Inventory': 'Succeeded with Issues', 'PL_04_Cur_Execute_Scripts': 'Partially Failed'}
+2026-10-06 23:03:18,855 INFO Pipelines not all Healthy, starting the orchestrator agent (attempt 1)
+2026-10-06 23:03:20,934 INFO Tool called: get_pipeline_statuses
+2026-10-06 23:03:23,798 INFO Tool called: get_failure_groups
+2026-10-06 23:03:30,441 INFO Tool called: get_impacted_tables for failed_table=sales_curation
+2026-10-06 23:03:31,847 INFO Tool called: split_impacted_tables(impacted_tables=['sales_dal'])
+2026-10-06 23:03:38,159 INFO Tool called: get_impacted_tables for failed_table=sales_dal
+2026-10-06 23:03:39,754 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 23:03:44,233 INFO Agent finished, validating the answer
+2026-10-06 23:03:44,238 INFO Code found 0 warning(s)
+2026-10-06 23:03:44,238 INFO Report valid with 1 failure(s)
+2026-10-06 23:03:44,239 INFO Check against code: all facts match
+2026-10-06 23:03:44,239 INFO Total tokens used: input 22769, output 1246
+2026-10-06 23:03:44,239 INFO Report saved to output/retries_plus_one_real.md
+2026-10-06 23:06:12,438 INFO Starting triage for cascadelens/scripts/data/two_cascades.db
+2026-10-06 23:06:12,439 INFO Tool called: get_pipeline_statuses
+2026-10-06 23:06:12,440 INFO Pipeline statuses: {'PL_01_Ingest_Crm': 'Failed', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Failed', 'PL_04_Cur_Execute_Scripts': 'Succeeded with Issues'}
+2026-10-06 23:06:12,440 INFO Pipelines not all Healthy, starting the orchestrator agent (attempt 1)
+2026-10-06 23:06:15,475 INFO Tool called: get_pipeline_statuses
+2026-10-06 23:06:20,268 INFO Tool called: get_failure_groups
+2026-10-06 23:06:25,330 INFO Tool called: get_impacted_tables for failed_table=PL_01_Ingest_Crm
+2026-10-06 23:06:26,507 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 23:06:31,309 INFO Tool called: get_impacted_tables for failed_table=PL_03_Ingest_Inventory
+2026-10-06 23:06:32,732 INFO Tool called: split_impacted_tables(impacted_tables=[])
+2026-10-06 23:06:38,873 INFO Agent finished, validating the answer
+2026-10-06 23:06:38,878 INFO Code found 0 warning(s)
+2026-10-06 23:06:38,878 INFO Report valid with 4 failure(s)
+2026-10-06 23:06:38,878 INFO Check against code: ['unexpected failure: PL_01_Ingest_Crm', 'unexpected failure: PL_03_Ingest_Inventory', "customer_ingestion: confirmed [], expected ['customer_curation', 'customer_dal']", "customer_ingestion: at risk [], expected ['sales_curation', 'sales_dal']", "inventory_ingestion: confirmed [], expected ['inventory_curation', 'inventory_dal']"]
+2026-10-06 23:06:38,878 INFO Total tokens used: input 18215, output 1346
+2026-10-06 23:06:38,879 INFO Report saved to output/two_cascades.md
