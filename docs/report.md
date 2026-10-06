@@ -1,5 +1,17 @@
 # CascadeLens report
 
+## Background about the dataset
+
+The system CascadeLens reads is a small data platform with four pipelines in three layers:
+
+- Ingestion: three pipelines, one each for CRM, Sales and Inventory. They load source data into the customer_ingestion, sales_ingestion and inventory_ingestion tables.
+- Curation and semantic: one pipeline, PL_04_Cur_Execute_Scripts, runs six scripts. Three are curation scripts and three are semantic scripts whose table names end in _dal.
+- Lineage: each table depends on the tables above it, so a failure in one table can affect the tables below it. Sales also reads customer_curation as a reference, so a CRM failure puts the Sales tables at risk.
+
+Two log tables hold the history: DiLog for ingestion and FwkCurLog for curation and semantic runs. A view called all_logs joins them into one list, and the code reads only that view. The sample databases hold 6 days of synthetic history.
+
+All log timestamps are UTC. The run date of each database is its latest date. My own clock is Vancouver, UTC-7.
+
 ## 1. Problem definition
 
 When a data platform fails overnight, an engineer has to open ingestion, curation and semantic logs separately and work out which failure came first and what it broke. CascadeLens reads the three layers from one SQLite view, finds today's real failures, and lists the tables they affect. It does not guess at facts. Plain Python computes them, and AI agents choose the tools and write the root cause in plain English.
@@ -19,7 +31,7 @@ Sales has a failed curation script and an empty ingestion load, so the real caus
 
 ## 2. Approach summary
 
-The design rule is "code decides, AI explains". Plain Python reads the logs, works out the pipeline statuses, groups the errors, counts recurrence and follows the lineage between tables. The AI never computes these facts. It chooses which tool to call and writes the root cause sentence.
+The design rule is "code decides, AI explains". Plain Python reads the logs, works out the pipeline statuses, groups the errors, counts recurrence and follows the lineage between tables. The AI never computes these facts. It chooses which tool to call and writes one plain sentence per failure about its root cause. It does not group failures: each failed table is its own failure.
 
 The flow, in order:
 
@@ -42,7 +54,7 @@ The orchestrator gets one task text, built in main.py. Each part of it exists be
 | A filled example of the answer | A JSON object with database, overall_status, failures and warnings, using placeholder values | The model copies the shape it sees. A bare JSON schema made it copy the schema wrapper into its answer |
 | Where to put the answer | "Put one flat JSON object in the single 'answer' argument of final_answer. Do not add a description or properties wrapper." | Once the model spread the keys into final_answer instead of using answer |
 | One failure per failed table | "Each failed table is one failure." "Call lineage_agent for one failed table at a time." | ambiguous.db has two failed tables, and one combined failure could not hold both |
-| Consequences are not failures | "If a failed table appears in the impacted tables of another failed table, it is a consequence, so do not list it as its own failure." | Stops a downstream table being counted twice |
+| Consequences are not failures | "If a failed table appears in the impacted tables of another failed table, it is a consequence, so do not list it as its own failure." | If one failed table is below another failed table, the code reports only the upper one as the failure and lists the lower one among its impacted tables. The prompt states the same rule. None of the four sample databases contains this case, so it was not exercised in a real run |
 | Plain root cause | "Write one plain sentence based on the example error. Do not use the signature text." | The model repeated the raw error signature. This is only partly fixed, see the reflection |
 | Warnings left empty | "Leave warnings as an empty list." | Model-written warnings were unreliable, so code now builds them |
 
@@ -63,7 +75,7 @@ Everything is in the cascadelens folder unless stated.
 | main.py | Entry point. Checks the database path, sets up logging, runs the status check, starts the orchestrator, validates the answer, runs the code check and saves the report |
 | agents.py | Builds the orchestrator, triage_agent and lineage_agent. Holds CountingModel, which adds up tokens inside the model because each agent resets its own counters |
 | tools.py | Four smolagents tools that wrap plain Python: get_pipeline_statuses, get_failure_groups, get_impacted_tables, split_impacted_tables |
-| analysis.py | Plain Python entry points: analyse, get_statuses, build_failures (the code answer key) and build_warnings |
+| analysis.py | Plain Python entry points: analyse, get_statuses, build_failures (the code's own result, used to check the agents) and build_warnings |
 | reader.py | Reads the all_logs view from the SQLite database into LogRecord objects. It reads nothing else |
 | models.py | The LogRecord dataclass, one row of the unified log |
 | pipeline_status.py | Picks the latest attempt of each unit, applies the status rule (Healthy, Succeeded with Issues, Partially Failed, Failed) and finds empty loads |
@@ -71,7 +83,7 @@ Everything is in the cascadelens folder unless stated.
 | error_signature.py | Turns an error message into a signature (GUIDs, timestamps and numbers removed) so the same error groups together, and counts recurrence over 7 days |
 | lineage.py | Builds the table dependency graph, finds every table below a failed table, splits confirmed from at risk, and groups related failures |
 | report.py | The Pydantic report shape, the markdown renderer and diff_failures, which lists facts the agent got wrong |
-| try_real.py | The baseline: one agent with all four tools, with the same early exit and the same checks |
+| try_real.py | The baseline for testing and comparison only: one agent with all four tools, with the same early exit and the same checks |
 | scripts/generate_sample_data.py | Creates the four sample databases and the expected_answers.md answer key |
 
 The tests folder has six files:
@@ -115,11 +127,6 @@ Multi-agent errors: two runs wrote display names instead of table names, and two
 
 I chose the multi-agent version for accuracy, at about 2.5 times the tokens. Limits: one database and 10 runs per side. My explanation, that the single agent holds both failures in one context, is a guess I did not verify. The choice must be tested on a larger dataset before it is final. I accept the intermittent errors and document them. The code does not override the agent.
 
-### A note on time
-
-Log timestamps are UTC. The run date 2026-10-01 is the latest date in each database.
-
-
 ## 6. Reflection
 
 ### What worked
@@ -132,13 +139,12 @@ Log timestamps are UTC. The run date 2026-10-01 is the latest date in each datab
 
 ### Why an agent at all, if code computes everything
 
-The code owns the facts. The agent reads the error text, writes a plain English root cause, and routes the tool calls, which matters more as the tool set grows. I measured it against a non-agent baseline (try_real.py, a single agent) and against the code as the answer key.
+The code owns the facts. The agent reads the error text, writes a plain English root cause, and routes the tool calls, which matters more as the tool set grows. I measured it against a single-agent baseline (try_real.py) and against the code's own result.
 
 ### Where AI was wrong, and how I found out
 
 - Its first early-exit rule missed "Succeeded with Issues". I corrected it.
 - Adding "one at a time" to the prompt did not stop parallel tool calls. Reading the smolagents source showed that max_tool_threads=1 does.
-- The first answer key described confidence levels, competing hypotheses and routing that the tool never built. I found this by comparing the key with a real report, and I changed the key to match the tool.
 
 ### Known limits
 
@@ -146,25 +152,14 @@ The code owns the facts. The agent reads the error text, writes a plain English 
 - The agents are intermittent. On ambiguous.db the multi-agent version was fully correct in 7 of 10 runs. The comparison used one database and 10 runs per side.
 - The orchestrator sometimes calls lineage_agent twice for one failed table, and reads the statuses a second time itself. This is cheap redundancy.
 - A database whose only issue is a recovered retry now starts the agents. That is the cost of the Healthy-only rule.
-- I did not retest the unhealthy path of try_real.py after my last edit. The retry-once branch was never exercised in a real run.
 - Each tool recomputes analyse(). The early exit is duplicated in main.py and try_real.py. I skipped per-agent log labels.
 - Two failures with a shared cause but no lineage path are reported as independent. Recurrence is counted by error signature, not by table.
 - The core code is slightly above 500 lines, because I removed dead code instead of compressing working code.
-- The tool reports facts only. It gives no confidence level, no competing hypotheses and no escalation to a human. For Sales in ambiguous.db it names sales_curation and warns about the empty load, but does not weigh the two causes.
 
 ### What I would improve
 
-1. Compute a confidence level in code (for example, low when an ingestion table loaded 0 rows and its curation table also failed), and add it to the report.
-2. Test on a larger dataset and more databases before the final choice between multi-agent and single agent.
-3. Enforce the root cause wording, and run the retry branch on purpose.
-4. Reduce the cost of the multi-agent run. The orchestrator sometimes calls lineage_agent twice for one failed table and reads the statuses a second time, which made the most expensive runs (about 36,000 input tokens).
-5. Compute analyse() once and share it, because each tool recomputes it. Remove the early-exit logic that is duplicated in main.py and try_real.py.
-6. Improve CountingModel. It adds to one global TOKENS dictionary, so it gives one total per run, not a count per agent. A per-agent count would show which agent costs the most, and the dictionary would need a reset if several runs shared one process.
-7. Add per-agent log labels, so the log shows which agent made each tool call.
-8. Retest the unhealthy path of try_real.py after the last edit.
-9. Let a database whose only issue is a recovered retry stop early, or use a cheaper check for it, instead of starting the agents.
-10. Link failures that share a cause but have no lineage path, and count recurrence per table as well as per error signature.
-
-### A note on time
-
-Log timestamps are UTC. My own clock is Vancouver, UTC-7.
+1. Test on a larger dataset and more databases before the final choice between multi-agent and single agent.
+2. Make the root cause wording reliable. The model sometimes copies the raw error text, and the retry-once branch has not been exercised in a real run.
+3. Reduce the cost of the multi-agent run. Repeated lineage calls made the most expensive runs (about 36,000 input tokens).
+4. Group errors by meaning, including failures that share a cause but have no lineage path. Today grouping is by a regex signature, and the AI only summarises each failure.
+5. Handle a database whose only issue is a recovered retry more cheaply, instead of starting the agents.

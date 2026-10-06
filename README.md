@@ -14,6 +14,7 @@ export OPENAI_API_KEY=your-key-here
 ```
 
 In GitHub Codespaces, add OPENAI_API_KEY as a Codespaces secret instead of exporting it. There is no .env file.
+If OPENAI_API_KEY is not set the tool stops with a Missing credentials error; the healthy database works without a key.
 
 ## Run
 
@@ -27,7 +28,7 @@ Sample databases are in `cascadelens/scripts/data/`: all_healthy.db, clean_casca
 
 Cost: all_healthy.db makes no AI call and costs nothing. The other three databases start the agents and used roughly 15,000 to 36,000 input tokens per run in my tests.
 
-Baseline (one agent with all four tools, for comparison):
+Baseline, for testing and comparison only (one agent with all four tools):
 
 ```bash
 python -m cascadelens.try_real cascadelens/scripts/data/ambiguous.db
@@ -44,11 +45,10 @@ The tests cover the plain Python parts and do not call the AI.
 ## Notes
 
 - Log timestamps are UTC. The Codespace clock is also UTC.
-- The tool reports facts only. It gives no confidence level and does not escalate to a human. See the reflection in docs/report.md.
 
 ## Code size
 
-Core code (cascadelens/*.py without try_real.py): 579 lines. try_real.py: 84 lines. Sample data generator: 357 lines. Counted without blank lines and lines that start with #. Docstring lines are included.
+Core code (cascadelens/*.py without try_real.py): 571 lines. try_real.py: 84 lines. Sample data generator: 357 lines. Counted without blank lines and lines that start with #. Docstring lines are included.
 
 ## Documentation
 
