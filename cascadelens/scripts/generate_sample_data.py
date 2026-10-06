@@ -267,47 +267,43 @@ EXPECTED = {
         incident_detail=[],
         statuses={"PL_01_Ingest_Crm": "Healthy", "PL_02_Ingest_Sales": "Healthy",
                   "PL_03_Ingest_Inventory": "Healthy", CUR_PIPELINE: "Healthy (6 of 6 succeeded)"},
-        route="status_only (no RCA, no fix proposals)",
     ),
     "clean_cascade": dict(
         summary="One CRM ingestion failure. No downstream script errors, the damage shows as 0 new rows. Inventory must stay clean.",
         incidents="1",
         incident_detail=[
-            "Root cause: customer_ingestion failed in PL_01_Ingest_Crm, SQL login failed, password expired for svc_adf_crm. Confidence: high.",
+            "Root cause: customer_ingestion failed in PL_01_Ingest_Crm, SQL login failed, password expired for svc_adf_crm.",
             "Confirmed impacted (succeeded with 0 rows, failed upstream on the lineage): customer_curation, customer_dal.",
-            "At risk (read stale customer data through the reference link, own row count normal): sales_curation, then sales_dal by transitivity. Lower confidence.",
+            "At risk (read stale customer data through the reference link, own row count normal): sales_curation, then sales_dal by transitivity.",
             "Not affected: sales_ingestion, every Inventory table. They must NOT appear as victims.",
         ],
         statuses={"PL_01_Ingest_Crm": "Failed", "PL_02_Ingest_Sales": "Healthy",
                   "PL_03_Ingest_Inventory": "Healthy",
                   CUR_PIPELINE: "Succeeded with Issues (no failures, 2 of 6 scripts wrote 0 rows)"},
-        route="cross_layer_rca: ingestion -> curation -> semantic, detect impact by lineage and row-count anomaly, propose the fix at the ingestion root only",
     ),
     "noisy_recurring": dict(
         summary="Recovered ingestion retries (noise) plus one script that fails on its own every day.",
         incidents="1 (customer_dal). The recovered sales_ingestion retries are noise and are not counted.",
         incident_detail=[
-            "Root cause: customer_dal references segment_code, which is not in its source customer_curation (columns are customer_id, name, city). Script defect, same error on all 6 days, upstream healthy. Confidence: high.",
+            "Root cause: customer_dal references segment_code, which is not in its source customer_curation (columns are customer_id, name, city). Script defect, same error on all 6 days, upstream healthy.",
             "Victims: none (nothing reads customer_dal).",
             "Noise: sales_ingestion failed twice (HTTP 429, timeout) and succeeded on attempt 3. One earlier 429 retry 2 days ago.",
         ],
         statuses={"PL_01_Ingest_Crm": "Healthy", "PL_02_Ingest_Sales": "Succeeded with Issues (needed 3 attempts)",
                   "PL_03_Ingest_Inventory": "Healthy",
                   CUR_PIPELINE: "Partially Failed (1 of 6 scripts failed)"},
-        route="history_check -> single_layer_triage (semantic only), retries flagged as noise, no cross-layer trace",
     ),
     "ambiguous": dict(
         summary="Sales has two plausible causes and too little evidence. Inventory has a separate, clean failure.",
         incidents="2",
         incident_detail=[
-            "Incident A (Sales): root cause undetermined, confidence low. Hypothesis 1: the sales source was empty or its schema changed upstream (sales_ingestion succeeded with 0 rows, normally about 9,800). Hypothesis 2: a defect in sales_curation. Victim: sales_dal (succeeded with 0 rows). Needs a human.",
-            "Incident B (Inventory): root cause inventory_dal transformation error (reorder_level not in its source inventory_curation, which succeeded). Confidence: high. Victims: none.",
+                        "Failure A (Sales): failed table sales_curation (order_id cannot be resolved). Confirmed impacted: sales_dal (succeeded with 0 rows). Warning: sales_ingestion loaded 0 rows, normally about 9,800, so the real cause may be an empty or changed source. The tool does not decide between the two.",
+            "Failure B (Inventory): root cause inventory_dal transformation error (reorder_level not in its source inventory_curation, which succeeded). Victims: none.",
             "CRM chain is unaffected.",
         ],
         statuses={"PL_01_Ingest_Crm": "Healthy", "PL_02_Ingest_Sales": "Succeeded with Issues (succeeded with 0 rows, normally about 9,800)",
                   "PL_03_Ingest_Inventory": "Healthy",
                   CUR_PIPELINE: "Partially Failed (2 of 6 scripts failed, sales_dal wrote 0 rows)"},
-        route="Incident A: cross_layer_rca -> low confidence -> escalate_to_human with both hypotheses. Incident B: single_layer_triage",
     ),
 }
 
@@ -317,11 +313,11 @@ def write_expected(out_dir: Path, today: date):
              f"Run date {today} (today is the latest date in each .db).", "",
              STATUS_RULE, ""]
     for name, e in EXPECTED.items():
-        lines += [f"## {name}.db", "", e["summary"], "", f"- Incident count: {e['incidents']}"]
+        lines += [f"## {name}.db", "", e["summary"], "", f"- Failure count: {e['incidents']}"]
         lines += [f"- {d}" for d in e["incident_detail"]]
         lines.append("- Pipeline statuses:")
         lines += [f"  - {p}: {s}" for p, s in e["statuses"].items()]
-        lines += [f"- Route: {e['route']}", ""]
+        lines.append("")
     (out_dir / "expected_answers.md").write_text("\n".join(lines), encoding="utf-8")
 
 
