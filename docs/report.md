@@ -155,9 +155,15 @@ The code owns the facts. The agent reads the error text, writes a plain English 
 ### What I would improve
 
 1. Compute a confidence level in code (for example, low when an ingestion table loaded 0 rows and its curation table also failed), and add it to the report.
-2. Test on a larger dataset before the final choice between multi-agent and single agent.
+2. Test on a larger dataset and more databases before the final choice between multi-agent and single agent.
 3. Enforce the root cause wording, and run the retry branch on purpose.
-4. Add per-agent log labels, and remove the duplicated early-exit logic.
+4. Reduce the cost of the multi-agent run. The orchestrator sometimes calls lineage_agent twice for one failed table and reads the statuses a second time, which made the most expensive runs (about 36,000 input tokens).
+5. Compute analyse() once and share it, because each tool recomputes it. Remove the early-exit logic that is duplicated in main.py and try_real.py.
+6. Improve CountingModel. It adds to one global TOKENS dictionary, so it gives one total per run, not a count per agent. A per-agent count would show which agent costs the most, and the dictionary would need a reset if several runs shared one process.
+7. Add per-agent log labels, so the log shows which agent made each tool call.
+8. Retest the unhealthy path of try_real.py after the last edit.
+9. Let a database whose only issue is a recovered retry stop early, or use a cheaper check for it, instead of starting the agents.
+10. Link failures that share a cause but have no lineage path, and count recurrence per table as well as per error signature.
 
 ### A note on time
 
