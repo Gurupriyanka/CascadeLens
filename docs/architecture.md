@@ -2,7 +2,7 @@
 
 Architecture diagram. Blue boxes are plain Python, which computes the facts. Orange hexagons are AI agents (gpt-4o-mini). Grey boxes are the tools the agents call. Green is the final output.
 
-![CascadeLens: cross-layer failure triage architecture](architecture.png)
+![CascadeLens: cross-layer failure triage architecture](Architecture_Diagram_CascadeLens.png)
 
 ```mermaid
 ---
