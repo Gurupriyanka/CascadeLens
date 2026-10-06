@@ -18,7 +18,7 @@ How AI tools were used to build CascadeLens.
 ## 2. Solution design
 
 - Used Claude to review the architecture: Python for deterministic facts, LLM agents for judgment and writing.
-- Output design reduced from many outputs to one report, saved as a markdown file (output/<database name>.md). It shows the pipeline statuses and, when something failed, the failures with their impacted tables.
+- Output design reduced from many outputs to one report, saved as a markdown file (output/<database name>.md). It shows the overall status and, when something failed, the failures with their impacted tables and any empty-load warnings. The pipeline statuses are logged and available through the get_pipeline_statuses tool.
 - Agent design went from one agent with many tools to an orchestrator and two specialists (triage_agent and lineage_agent), each with only its own tools.
 
 ## 3. Implementation
