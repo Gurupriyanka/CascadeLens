@@ -464,3 +464,6 @@
 2026-10-06 23:06:38,878 INFO Check against code: ['unexpected failure: PL_01_Ingest_Crm', 'unexpected failure: PL_03_Ingest_Inventory', "customer_ingestion: confirmed [], expected ['customer_curation', 'customer_dal']", "customer_ingestion: at risk [], expected ['sales_curation', 'sales_dal']", "inventory_ingestion: confirmed [], expected ['inventory_curation', 'inventory_dal']"]
 2026-10-06 23:06:38,878 INFO Total tokens used: input 18215, output 1346
 2026-10-06 23:06:38,879 INFO Report saved to output/two_cascades.md
+2026-10-07 00:09:35,739 INFO Tool called: get_pipeline_statuses
+2026-10-07 00:09:35,743 INFO Single agent baseline: pipeline statuses: {'PL_01_Ingest_Crm': 'Healthy', 'PL_02_Ingest_Sales': 'Healthy', 'PL_03_Ingest_Inventory': 'Healthy', 'PL_04_Cur_Execute_Scripts': 'Healthy'}
+2026-10-07 00:09:35,744 INFO All pipelines Healthy, skipping the agent
