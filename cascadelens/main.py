@@ -9,13 +9,18 @@ from cascadelens.analysis import analyse, build_failures, build_warnings
 from cascadelens.reader import read_logs
 from pydantic import ValidationError
 import logging
+
+# Our own logger shows INFO messages. The root logger stays at WARNING
+# (see setup_logging), so other libraries stay quiet.
 log = logging.getLogger("cascadelens")
 log.setLevel(logging.INFO)
+
 
 def check_db_path(db_path: str) -> None:
     """Stop with a clear message if the database file does not exist."""
     if not Path(db_path).is_file():
         sys.exit(f"Error: database file not found: {db_path}")
+
 
 def setup_logging() -> None:
     """Log to the terminal and to output/cascadelens.log."""
@@ -29,7 +34,10 @@ def setup_logging() -> None:
 
 
 def parse_report(raw) -> TriageReport:
-    """Turn the agent's answer into a validated report. Raises on bad JSON or a wrong shape."""
+    """Turn the agent's answer into a validated report.
+
+    Raises json.JSONDecodeError on bad JSON and ValidationError on a wrong shape.
+    """
     # The model may return a dict, or text wrapped in a markdown code fence.
     if isinstance(raw, dict):
         data = raw
@@ -38,8 +46,14 @@ def parse_report(raw) -> TriageReport:
         data = json.loads(text)
     return TriageReport.model_validate(data)
 
+
 def triage(db_path: str) -> TriageReport:
-    """Check the statuses first. Stop early when every pipeline is Healthy."""
+    """Run the full triage on one database and return the validated report.
+
+    Checks the statuses first and stops early when every pipeline is Healthy.
+    Otherwise it asks the orchestrator agent, validates the answer, and then
+    lets the code add the warnings and check the agent's facts.
+    """
     statuses = json.loads(get_pipeline_statuses(db_path))
     log.info("Pipeline statuses: %s", statuses)
     broken = any(s != "Healthy" for s in statuses.values())
@@ -47,6 +61,7 @@ def triage(db_path: str) -> TriageReport:
         log.info("All pipelines Healthy, skipping the agents")
         return TriageReport(database=db_path, overall_status="Healthy")
 
+    # The shape the agent must follow, shown to it inside the task text.
     example_schema = {
         "database": db_path,
         "overall_status": "Unhealthy",
@@ -97,6 +112,7 @@ def triage(db_path: str) -> TriageReport:
     # The code computes its answer key only now, after the agents have answered.
     analysis, records = analyse(db_path), read_logs(db_path)
     expected = build_failures(analysis, records)
+    # Warnings always come from the code, never from the agent.
     report.warnings = build_warnings(analysis, records, expected)
     log.info("Code found %d warning(s)", len(report.warnings))
     log.info("Report valid with %d failure(s)", len(report.failures))
@@ -106,6 +122,7 @@ def triage(db_path: str) -> TriageReport:
 
 
 def main() -> None:
+    """Command line entry point: python -m cascadelens.main <database>."""
     setup_logging()
     db_path = sys.argv[1]
     check_db_path(db_path)
@@ -113,7 +130,8 @@ def main() -> None:
     try:
         report = triage(db_path)
     except Exception as err:
-        log.exception("Triage failed")  # writes the full traceback to the log file
+        # log.exception writes the full traceback to the log file.
+        log.exception("Triage failed")
         sys.exit(f"Error: triage failed: {err}")
     print(report.model_dump_json(indent=2))
 

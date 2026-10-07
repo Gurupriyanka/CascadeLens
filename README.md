@@ -48,7 +48,7 @@ The tests cover the plain Python parts and do not call the AI.
 
 ## Code size
 
-Core code (cascadelens/*.py without try_real.py): 571 lines. try_real.py: 84 lines. Sample data generator: 357 lines. Counted without blank lines and lines that start with #. Docstring lines are included.
+Core code (cascadelens/*.py without try_real.py): 540 lines. try_real.py: 83 lines. Sample data generator: 325 lines. Counted without blank lines, comment lines and docstrings.
 
 ## Documentation
 

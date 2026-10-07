@@ -35,7 +35,7 @@ Claude helped me build the code one small piece at a time: the plain Python anal
 | Pick multi-agent or single agent from a few runs | I ran 10 runs of each and reported the mixed result. I will test on a larger dataset before a final choice | 7 of 10 correct for multi-agent against 4 of 10 for the single agent, at about 2.5 times the tokens. Small sample, one database |
 | Earlier token tables summed from the step lines | I discarded them as wrong and counted tokens inside the model (CountingModel) | The step lines show a running total, and each agent resets its counters on every run |
 | "One at a time" in the task text to stop parallel calls | I found by reading the smolagents source that max_tool_threads=1 stops it | The wording alone did not work |
-| Keep unused code | I removed the unused enums and fake_model.py, and did not compress working code | Less code to explain. The core is about 570 lines for this reason |
+| Keep unused code | I removed the unused enums and fake_model.py, and did not compress working code | Less code to explain. The core is about 540 lines for this reason |
 | Per-agent labels in the log lines | I skipped them to keep things simple | Not needed for the output |
 
 
