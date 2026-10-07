@@ -18,15 +18,35 @@ If OPENAI_API_KEY is not set the tool stops with a Missing credentials error; th
 
 ## Run
 
+Run each command from the repository root. The report is printed as JSON and saved as `output/<database name>.md`. The run log is `output/cascadelens.log`.
+
+Sample databases are in `cascadelens/scripts/data/`. Their run date is 2026-10-01. The expected results are in `cascadelens/scripts/data/expected_answers.md`.
+
+1. Healthy database (no AI call, no API key needed, costs nothing):
+
+```bash
+python -m cascadelens.main cascadelens/scripts/data/all_healthy.db
+```
+
+2. Clean cascade (needs OPENAI_API_KEY):
+
 ```bash
 python -m cascadelens.main cascadelens/scripts/data/clean_cascade.db
 ```
 
-The report is printed as JSON and saved as `output/<database name>.md`. The run log is `output/cascadelens.log`.
+3. Noisy recurring failures (needs OPENAI_API_KEY):
 
-Sample databases are in `cascadelens/scripts/data/`: all_healthy.db, clean_cascade.db, noisy_recurring.db and ambiguous.db. Their run date is 2026-10-01. The expected results are in `cascadelens/scripts/data/expected_answers.md`.
+```bash
+python -m cascadelens.main cascadelens/scripts/data/noisy_recurring.db
+```
 
-Cost: all_healthy.db makes no AI call and costs nothing. The other three databases start the agents and used roughly 15,000 to 36,000 input tokens per run in my tests.
+4. Ambiguous case (needs OPENAI_API_KEY):
+
+```bash
+python -m cascadelens.main cascadelens/scripts/data/ambiguous.db
+```
+
+Cost: databases 2 to 4 start the agents and used roughly 15,000 to 36,000 input tokens per run in my tests.
 
 Baseline, for testing and comparison only (one agent with all four tools):
 
