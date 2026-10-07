@@ -35,8 +35,8 @@ Claude helped me build the code one small piece at a time: the plain Python anal
 | Pick multi-agent or single agent from a few runs | I ran 10 runs of each and reported the mixed result. I will test on a larger dataset before a final choice | 7 of 10 correct for multi-agent against 4 of 10 for the single agent, at about 2.5 times the tokens. Small sample, one database |
 | Earlier token tables summed from the step lines | I discarded them as wrong and counted tokens inside the model (CountingModel) | The step lines show a running total, and each agent resets its counters on every run |
 | "One at a time" in the task text to stop parallel calls | I found by reading the smolagents source that max_tool_threads=1 stops it | The wording alone did not work |
-| Keep unused code | I removed the unused enums and fake_model.py, and did not compress working code | Less code to explain. The core is slightly above 500 lines for this reason |
-| Per-agent labels in the log lines | I skipped them to keep things simple, and listed them under what I would improve | Identified as areas of improvement |
+| Keep unused code | I removed the unused enums and fake_model.py, and did not compress working code | Less code to explain. The core is about 570 lines for this reason |
+| Per-agent labels in the log lines | I skipped them to keep things simple | Not needed for the output |
 
 
 ## 4. Prompt iterations (sample development prompts)
@@ -59,10 +59,10 @@ How I improved the runtime prompts for the orchestrator, triage_agent and lineag
 | 2 | Orchestrator | The model copied the JSON schema wrapper into its answer, and once spread the keys into `final_answer` instead of using `answer` | A JSON schema in the task text | A filled example, "Do not add a description or properties wrapper", "single 'answer' argument of final_answer" | One flat JSON object that validates with `TriageReport` |
 | 3 | Orchestrator | `ambiguous.db` has two failed tables, and the one-failure shape could not hold both, or a downstream table was reported as its own failure | One `failed_table`, `root_cause` and `at_risk` at top level | A `failures` list, "Each failed table is one failure", "one failed table at a time", "if a failed table appears in the impacted tables of another failed table, it is a consequence" | Independent failures are listed separately and cascaded ones are not double counted |
 | 4 | Orchestrator | `root_cause` repeated the raw signature text, and model-written warnings were unreliable | Free choice of wording, model asked to fill warnings | "One plain sentence based on the example error. Do not use the signature text. Leave warnings as an empty list." | Readable root causes, and warnings now come from code (`build_warnings`) |
-| 5 | Orchestrator | Occasional invalid JSON or a wrong shape from the model, and no way to know whether the facts were right | A single run, answer trusted as is | Retry once with a fresh orchestrator, then compare the report to the code answer key with `diff_failures` and log the result | Bad output is caught, and every run logs whether the facts match the plain Python baseline |
+| 5 | Orchestrator | Occasional invalid JSON or a wrong shape from the model, and no way to know whether the facts were right | A single run, answer trusted as is | Retry once with a fresh orchestrator, then compare the report to the code's own result with `diff_failures` and log the result | Bad output is caught, and every run logs whether the facts match the plain Python baseline |
 
 ### What I learned about prompting
 
 - A filled example works better than a schema, because the model copies the shape it sees.
 - Narrow agents, tight docstrings and explicit rules for edge cases (several failures, consequences) mattered more than longer instructions.
-- Facts the code can compute (warnings, the answer key) should not be left to the model. Use the model for wording and routing, and use code to verify.
+- Facts the code can compute (warnings, the expected facts) should not be left to the model. Use the model for wording and routing, and use code to verify.
