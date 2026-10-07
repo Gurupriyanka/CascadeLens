@@ -146,20 +146,8 @@ The code owns the facts. The agent reads the error text, writes a plain English 
 - Its first early-exit rule missed "Succeeded with Issues". I corrected it.
 - Adding "one at a time" to the prompt did not stop parallel tool calls. Reading the smolagents source showed that max_tool_threads=1 does.
 
-### Known limits
+### Known limits and what I would improve
 
-- Root cause wording is not enforced. clean_cascade gave a plain sentence, but noisy_recurring repeated the raw error text.
-- The agents are intermittent. On ambiguous.db the multi-agent version was fully correct in 7 of 10 runs. The comparison used one database and 10 runs per side.
-- The orchestrator sometimes calls lineage_agent twice for one failed table, and reads the statuses a second time itself. This is cheap redundancy.
-- A database whose only issue is a recovered retry now starts the agents. That is the cost of the Healthy-only rule.
-- Each tool recomputes analyse(). The early exit is duplicated in main.py and try_real.py. I skipped per-agent log labels.
-- Two failures with a shared cause but no lineage path are reported as independent. Recurrence is counted by error signature, not by table.
-- The core code is slightly above 500 lines, because I removed dead code instead of compressing working code.
-
-### What I would improve
-
-1. Test on a larger dataset and more databases before the final choice between multi-agent and single agent.
-2. Make the root cause wording reliable. The model sometimes copies the raw error text, and the retry-once branch has not been exercised in a real run.
-3. Reduce the cost of the multi-agent run. Repeated lineage calls made the most expensive runs (about 36,000 input tokens).
-4. Group errors by meaning, including failures that share a cause but have no lineage path. Today grouping is by a regex signature, and the AI only summarises each failure.
-5. Handle a database whose only issue is a recovered retry more cheaply, instead of starting the agents.
+1. Agent output is not fully reliable. Root cause wording is not enforced (noisy_recurring repeated the raw error text), and on ambiguous.db the multi-agent version was fully correct in 7 of 10 runs, with one database and 10 runs per side. Next step: make the wording reliable, and test on a larger dataset and more databases before the final choice between multi-agent and single agent.
+2. The multi-agent run costs more than it needs to. The orchestrator sometimes calls lineage_agent twice for one failed table (the most expensive runs reached about 36,000 input tokens), and a database whose only issue is a recovered retry still starts the agents. Next step: cut the repeated lineage calls and handle a recovered retry more cheaply.
+3. Grouping is by a regex signature, and the AI only summarises each failure. Two failures with a shared cause but no lineage path are reported as independent, and recurrence is counted by error signature, not by table. Next step: group errors by meaning.
